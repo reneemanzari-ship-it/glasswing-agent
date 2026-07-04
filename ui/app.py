@@ -2,6 +2,7 @@ import sys
 import uuid
 import json
 import hashlib
+import asyncio
 from pathlib import Path
 from datetime import datetime, date
 from decimal import Decimal
@@ -360,8 +361,11 @@ with tab1:
                     )
                 )
                 
-                # Run through Orchestrator
-                manifest, verified = orchestrator.evaluate_new_initiative(initiative_obj)
+                # Run through Orchestrator via the async pipeline so the UI
+                # thread isn't blocked synchronously for the run's duration.
+                # (evaluate_new_initiative() itself remains the sync path
+                # that tests call directly.)
+                manifest, verified = asyncio.run(orchestrator.evaluate_new_initiative_async(initiative_obj))
                 st.success("✅ Multi-Agent Intake & Governance Review Executed Successfully!")
                 
                 # Query generated structures for display
@@ -403,11 +407,11 @@ with tab2:
         inv_data = []
         for s in p_state.summaries:
             inv_data.append({
-                "Initiative ID": s.initiative_id[:8],
+                "Initiative ID": str(s.initiative_id)[:8],
                 "Name": s.name,
-                "Status": s.status.value,
-                "Assigned Risk": s.risk_tier,
-                "Last Updated": s.last_updated.strftime("%Y-%m-%d %H:%M") if hasattr(s.last_updated, "strftime") else str(s.last_updated)
+                "Status": s.current_status.value,
+                "Assigned Risk": s.overall_risk_tier,
+                "Last Updated": s.last_updated.strftime("%Y-%m-%d %H:%M") if s.last_updated else "—"
             })
         st.dataframe(pd.DataFrame(inv_data), use_container_width=True)
 

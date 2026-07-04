@@ -296,6 +296,7 @@ class PortfolioManagerAgent:
         
         for r in rows:
             status = InitiativeStatus(r["status"])
+            last_updated = datetime.fromisoformat(r["last_updated"]) if r.get("last_updated") else None
             summaries.append(
                 InitiativeSummary(
                     initiative_id=r["id"],
@@ -304,6 +305,7 @@ class PortfolioManagerAgent:
                     sponsor_owner="Unknown",
                     current_status=status,
                     overall_risk_tier=r["risk_tier"],
+                    last_updated=last_updated,
                     days_in_current_state=0
                 )
             )

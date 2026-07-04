@@ -156,13 +156,20 @@ def search_frameworks(use_case_description: str) -> str:
                 matched_for_tier = []
                 for kw in search_keywords:
                     if kw in tier_str:
-                        # Find specific category details
+                        # Find specific category details. Different frameworks
+                        # name their category-breakdown dict differently (EU
+                        # AI Act uses "annex_iii_categories", Colorado SB 205
+                        # uses "consequential_decision_categories") — check
+                        # every known shape rather than hardcoding just one,
+                        # or frameworks other than EU AI Act never match here.
                         annex_matches = []
-                        annex = tier_data.get("criteria", {}).get("annex_iii_categories", {})
-                        for cat_key, cat_val in annex.items():
-                            if kw in cat_val.lower():
-                                annex_matches.append(f"Annex III category '{cat_key}': {cat_val}")
-                                
+                        criteria = tier_data.get("criteria", {})
+                        for category_dict_key in ("annex_iii_categories", "consequential_decision_categories"):
+                            categories = criteria.get(category_dict_key, {})
+                            for cat_key, cat_val in categories.items():
+                                if kw in cat_val.lower():
+                                    annex_matches.append(f"{category_dict_key} '{cat_key}': {cat_val}")
+
                         examples_matched = [ex for ex in tier_data.get("criteria", {}).get("examples", []) if kw in ex.lower()]
                         
                         if annex_matches or examples_matched:

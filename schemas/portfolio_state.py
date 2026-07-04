@@ -48,6 +48,7 @@ class InitiativeSummary(BaseModel):
     current_status: InitiativeStatus
     overall_risk_tier: Optional[str] = None  # from RiskProfile if classified
     target_deployment_date: Optional[date] = None
+    last_updated: Optional[datetime] = None
     days_in_current_state: int = Field(..., ge=0)
     next_required_action: Optional[str] = None
     next_action_owner: Optional[str] = None
@@ -66,6 +67,7 @@ class PortfolioState(BaseModel):
     by_status: dict[InitiativeStatus, int] = Field(default_factory=dict)
     high_risk_count: int = Field(..., ge=0)
     deployed_count: int = Field(..., ge=0)
+    summaries: list[InitiativeSummary] = Field(default_factory=list)  # every initiative in the portfolio
     at_risk_of_missing_deadline: list[InitiativeSummary] = Field(default_factory=list)
     recent_transitions_7d: list[StateTransition] = Field(default_factory=list)
     bottlenecks: list[InitiativeSummary] = Field(default_factory=list)  # stuck > 14d
