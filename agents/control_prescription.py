@@ -56,16 +56,22 @@ class ControlPrescriptionAgent:
             from decimal import Decimal
             from schemas.control_prescription import (
                 Controls, DeploymentGate, ImplementationEffort, Guardrail, ControlCategory,
-                SourceFramework, HITLTouchpoint, MonitoringRequirement, AuditArtifactRequirement
+                SourceFramework, HITLTouchpoint, MonitoringRequirement, AuditArtifactRequirement,
+                RegulatorySubmission, IndependentReview
             )
 
             guardrails = []
             hitl_touchpoints = []
             monitoring = []
             audit_artifacts = []
+            regulatory_submissions = []
+            independent_review = []
 
             is_eu_high_risk = risk_profile.classifications.eu_ai_act.tier == "high_risk"
+            is_eu_limited_risk = risk_profile.classifications.eu_ai_act.tier == "limited_risk"
             is_financial_lending = risk_profile.classifications.colorado_sb_205.high_risk_category == "financial_lending"
+            is_colorado_applicable = risk_profile.classifications.colorado_sb_205.applicable
+            is_nist_manage_critical = risk_profile.classifications.nist_ai_rmf.manage_attention == "critical"
 
             if is_eu_high_risk:
                 guardrails.append(
@@ -87,7 +93,100 @@ class ControlPrescriptionAgent:
                         implementation_notes="Any decision where model confidence falls below 0.95 must be routed to human review rather than auto-approved.",
                         mandatory=True,
                         source_framework=[SourceFramework.EU_AI_ACT, SourceFramework.NIST_AI_RMF],
-                        source_citation="EU AI Act Article 14; NIST AI RMF MANAGE-1"
+                        source_citation="EU AI Act Article 15 (Accuracy, Robustness and Cybersecurity); NIST AI RMF MANAGE-1"
+                    )
+                )
+                # High-Risk EU AI Act systems must file both an Article 14 (Human
+                # Oversight) and an Article 15 (Accuracy, Robustness and
+                # Cybersecurity) conformity submission -- proportionality-gated on
+                # is_eu_high_risk so these never bleed into Minimal/Limited Risk
+                # prescriptions.
+                regulatory_submissions.append(
+                    RegulatorySubmission(
+                        control_id="REG-0001",
+                        submission_type="EU AI Act Article 14 (Human Oversight) conformity documentation",
+                        submission_authority="Internal Compliance / EU Market Surveillance Authority",
+                        submission_deadline_days_before_deployment=30,
+                        mandatory=True,
+                        source_framework=[SourceFramework.EU_AI_ACT]
+                    )
+                )
+                regulatory_submissions.append(
+                    RegulatorySubmission(
+                        control_id="REG-0002",
+                        submission_type="EU AI Act Article 15 (Accuracy, Robustness and Cybersecurity) conformity testing report",
+                        submission_authority="Internal Compliance / EU Market Surveillance Authority",
+                        submission_deadline_days_before_deployment=30,
+                        mandatory=True,
+                        source_framework=[SourceFramework.EU_AI_ACT]
+                    )
+                )
+                # Article 14 (Human Oversight) is operational/ongoing; Article 43
+                # (Conformity Assessment) is the separate pre-deployment assessment
+                # filed with the EU database per Article 49 -- these are two
+                # distinct mandatory submissions, not one.
+                regulatory_submissions.append(
+                    RegulatorySubmission(
+                        control_id="REG-0004",
+                        submission_type="EU AI Act Article 43 Conformity Assessment (pre-deployment, EU database registration per Article 49)",
+                        submission_authority="EU Market Surveillance Authority / EU AI Database",
+                        submission_deadline_days_before_deployment=30,
+                        mandatory=True,
+                        source_framework=[SourceFramework.EU_AI_ACT]
+                    )
+                )
+
+            if is_colorado_applicable:
+                # Mandatory for any Colorado SB 205 high-risk category, not just
+                # financial_lending -- proportionality-gated on applicability so it
+                # never applies to a not_applicable Colorado profile.
+                regulatory_submissions.append(
+                    RegulatorySubmission(
+                        control_id="REG-0003",
+                        submission_type="Colorado SB 205 Pre-Deployment Impact Assessment",
+                        submission_authority="Colorado Attorney General (on request) / Internal Compliance",
+                        submission_deadline_days_before_deployment=30,
+                        mandatory=True,
+                        source_framework=[SourceFramework.COLORADO_SB_205]
+                    )
+                )
+
+            # Independent review is mandatory whenever ANY of the three
+            # conditions holds -- not gated to financial_lending, and not
+            # collapsed into the is_eu_high_risk check alone, since Colorado
+            # applicability or a Critical NIST Manage attention level can each
+            # independently require it too.
+            if is_eu_high_risk or is_colorado_applicable or is_nist_manage_critical:
+                independent_review.append(
+                    IndependentReview(
+                        control_id="IR-0001",
+                        review_type="external fairness audit",
+                        cadence="annual",
+                        mandatory=True
+                    )
+                )
+                independent_review.append(
+                    IndependentReview(
+                        control_id="IR-0002",
+                        review_type="adversarial red-team",
+                        cadence="quarterly",
+                        mandatory=True
+                    )
+                )
+
+            if is_eu_limited_risk:
+                # Article 50 transparency obligation -- proportionality-gated on
+                # is_eu_limited_risk so it never inherits High-Risk-only controls
+                # like 7-year retention, HITL thresholds, or external audits.
+                guardrails.append(
+                    Guardrail(
+                        control_id="GR-0003",
+                        category=ControlCategory.OUTPUT_SCHEMA,
+                        description="User notification of AI interaction.",
+                        implementation_notes="Every user-facing response must include a clear, conspicuous disclosure that the user is interacting with an AI system, not a human, before or at the start of the interaction.",
+                        mandatory=True,
+                        source_framework=[SourceFramework.EU_AI_ACT],
+                        source_citation="Article 50"
                     )
                 )
 
@@ -133,6 +232,8 @@ class ControlPrescriptionAgent:
                     hitl_touchpoints=hitl_touchpoints,
                     monitoring=monitoring,
                     audit_artifacts=audit_artifacts,
+                    regulatory_submissions=regulatory_submissions,
+                    independent_review=independent_review,
                 ),
                 deployment_gate=DeploymentGate(
                     approvers_required=["Compliance Officer"],

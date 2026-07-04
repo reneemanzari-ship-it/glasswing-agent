@@ -25,6 +25,13 @@ def local_classify(initiative: Initiative) -> RiskProfile:
     # Check if this matches a high-risk credit underwriting scenario (like the 2:47am loan)
     is_credit_scenario = any(k in combined_text for k in ["loan", "credit", "lending", "underwriter", "underwriting"])
     is_recruitment_scenario = any(k in combined_text for k in ["employment", "hiring", "recruit", "cv", "resume"])
+    # Limited Risk (Article 50): interacts directly with natural persons (chatbot/
+    # conversational/synthetic content) with some human oversight in place, and
+    # isn't already a credit or recruitment (Annex III) high-risk trigger.
+    is_limited_risk_scenario = (
+        any(k in combined_text for k in ["chatbot", "conversational", "virtual assistant", "deepfake", "synthetic content"])
+        and initiative.ai_system.hitl_planned.value in ("yes", "partial")
+    )
 
     if is_credit_scenario:
         # EU AI Act High Risk (Annex III.5.b - credit scoring)
@@ -91,7 +98,43 @@ def local_classify(initiative: Initiative) -> RiskProfile:
         
         overall = OverallRiskTier.HIGH
         exposure_summary = "High regulatory exposure under EU AI Act Annex III(4) and Colorado SB 205 (employment)."
-        
+
+    elif is_limited_risk_scenario:
+        # EU AI Act Limited Risk (Article 50 - transparency obligations)
+        eu_act = EUAIActClassification(
+            citations=["EU AI Act Article 50"],
+            rationale="This system interacts directly with natural persons (chatbot/conversational AI) and owes them a transparency disclosure under Article 50, even though it makes no consequential decisions under Annex III or Colorado SB 205.",
+            confidence=0.90,
+            tier=EUAIActTier.LIMITED_RISK,
+            applicable_annexes=[]
+        )
+
+        nist = NISTAIRMFClassification(
+            citations=["NIST AI RMF MEASURE-1", "MANAGE-2"],
+            rationale="Conversational AI interacting directly with consumers requires elevated attention to measurement and management of response quality and escalation, though it does not rise to consequential-decision-making critical attention.",
+            confidence=0.90,
+            govern_attention=NISTAttentionLevel.ROUTINE,
+            map_attention=NISTAttentionLevel.ROUTINE,
+            measure_attention=NISTAttentionLevel.ELEVATED,
+            manage_attention=NISTAttentionLevel.ELEVATED,
+            critical_categories=[]
+        )
+
+        co_sb = ColoradoSB205Classification(
+            citations=["C.R.S. § 6-1-1701(7)(b)"],
+            rationale="System does not make or substantially factor into a consequential decision affecting consumer life opportunities; routine customer service interaction only.",
+            confidence=0.90,
+            applicable=False,
+            high_risk_category=None
+        )
+
+        # overall_risk_tier follows the assigned EU AI Act tier (Limited Risk ->
+        # moderate), not NIST attention levels in isolation. Elevated measure/manage
+        # attention here reflects transparency/interaction risk; it doesn't by
+        # itself imply a different overall tier.
+        overall = OverallRiskTier.MODERATE
+        exposure_summary = "Moderate regulatory exposure under EU AI Act Limited Risk (Article 50 transparency obligations); no high-risk trigger under Annex III or Colorado SB 205."
+
     else:
         # Minimal Risk
         eu_act = EUAIActClassification(
