@@ -1,0 +1,37 @@
+{
+  "scenario": "Customer service tier-1 chatbot (limited-risk transparency case)",
+  "input_initiative": {
+    "name": "Tier-1 Support Chatbot",
+    "sponsor": {"business_unit": "Customer Care", "owner": "Marcus Lead"},
+    "description": "AI chatbot handles tier-1 customer inquiries using only public product information, routing complex issues to human support agents. Session context uses only name and email.",
+    "ai_system": {
+      "type": "llm",
+      "autonomy_level": "approve_with_override",
+      "hitl_planned": "partial",
+      "hitl_description": "Complex or escalated issues are routed to human agents; routine tier-1 inquiries handled autonomously."
+    },
+    "data": {
+      "sources": ["public product documentation", "session context (name, email)"],
+      "sensitivity": ["pii"],
+      "jurisdictions": ["US-CO", "US-NY"]
+    },
+    "impact": {
+      "user_scope": ["consumers"],
+      "business_impact_tier": "moderate",
+      "reversibility": "fully_reversible"
+    },
+    "intake_metadata": {
+      "completeness_score": 0.92,
+      "intake_duration_minutes": 9.0,
+      "intake_agent_version": "1.0.0",
+      "prompt_manifest_sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+    }
+  },
+  "expected_risk_profile": {
+    "eu_ai_act": {"tier": "limited_risk", "citation_contains": "Article 50"},
+    "nist_ai_rmf": {"measure_attention": "elevated", "manage_attention": "elevated"},
+    "colorado_sb_205": {"applicable": false},
+    "overall_risk_tier": "moderate",
+    "human_review_required": false
+  }
+}

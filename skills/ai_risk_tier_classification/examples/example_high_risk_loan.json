@@ -1,0 +1,36 @@
+{
+  "scenario": "2:47am consumer loan approval (canonical high-risk case)",
+  "input_initiative": {
+    "name": "LendFast Autonomous Underwriter",
+    "sponsor": {"business_unit": "Retail Lending Division", "owner": "Alex Credit-Lead"},
+    "description": "Autonomous credit evaluation and underwriting system that approves consumer loans without human review at 2:47 AM.",
+    "ai_system": {
+      "type": "classical_ml",
+      "autonomy_level": "fully_autonomous",
+      "hitl_planned": "no"
+    },
+    "data": {
+      "sources": ["credit scores bureau history", "financial transaction lists"],
+      "sensitivity": ["financial", "pii"],
+      "jurisdictions": ["US-CO", "EU"]
+    },
+    "impact": {
+      "user_scope": ["consumers"],
+      "business_impact_tier": "high",
+      "reversibility": "partially_reversible"
+    },
+    "intake_metadata": {
+      "completeness_score": 0.90,
+      "intake_duration_minutes": 12.5,
+      "intake_agent_version": "1.0.0",
+      "prompt_manifest_sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+    }
+  },
+  "expected_risk_profile": {
+    "eu_ai_act": {"tier": "high_risk", "citation_contains": "Annex III(5)(b)", "min_confidence": 0.9},
+    "nist_ai_rmf": {"manage_attention": "critical"},
+    "colorado_sb_205": {"applicable": true, "high_risk_category": "financial_lending"},
+    "overall_risk_tier": "high",
+    "human_review_required": true
+  }
+}

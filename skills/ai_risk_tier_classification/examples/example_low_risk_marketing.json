@@ -1,0 +1,37 @@
+{
+  "scenario": "Internal blog post generation (low-risk marketing content)",
+  "input_initiative": {
+    "name": "Marketing Draft Assistant",
+    "sponsor": {"business_unit": "Marketing Operations", "owner": "Marketing Ops Lead"},
+    "description": "AI generates draft blog posts for internal marketing review. No customer data is used, and content is never distributed externally without human approval.",
+    "ai_system": {
+      "type": "llm",
+      "autonomy_level": "recommend_only",
+      "hitl_planned": "yes",
+      "hitl_description": "Marketing team reviews and approves all drafts before any external publication."
+    },
+    "data": {
+      "sources": ["public product documentation", "internal style guides"],
+      "sensitivity": ["none"],
+      "jurisdictions": ["US-NY"]
+    },
+    "impact": {
+      "user_scope": ["internal_employees"],
+      "business_impact_tier": "low",
+      "reversibility": "fully_reversible"
+    },
+    "intake_metadata": {
+      "completeness_score": 0.90,
+      "intake_duration_minutes": 8.0,
+      "intake_agent_version": "1.0.0",
+      "prompt_manifest_sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+    }
+  },
+  "expected_risk_profile": {
+    "eu_ai_act": {"tier": "minimal_risk"},
+    "nist_ai_rmf": {"govern_attention": "routine", "map_attention": "routine", "measure_attention": "routine", "manage_attention": "routine"},
+    "colorado_sb_205": {"applicable": false},
+    "overall_risk_tier": "low",
+    "human_review_required": false
+  }
+}
