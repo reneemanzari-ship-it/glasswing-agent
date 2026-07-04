@@ -1,4 +1,5 @@
 import os
+import re
 import json
 from pathlib import Path
 from mcp.server.fastmcp import FastMCP
@@ -8,25 +9,52 @@ mcp = FastMCP("RegulatoryFrameworks")
 
 FRAMEWORKS_DIR = Path(__file__).parent / "frameworks"
 
-# Synonym mapping to translate common use-case terms to regulatory taxonomy keywords
+# Synonym mapping to translate common use-case terms to regulatory taxonomy keywords.
+# NOTE: "screening" intentionally does NOT expand to "admission"/"enrollment" —
+# a query already naming its own domain (e.g. "resume screening") doesn't need
+# education-admission terms pulled in, and doing so caused false-positive
+# EU AI Act Annex III(3) / Colorado "education" hits on pure HR queries.
 SYNONYM_MAP = {
     "loan": ["credit", "lending", "finance", "bank"],
     "loans": ["credit", "lending", "finance", "bank"],
     "decisioning": ["decision", "decisions", "assess", "assessment", "evaluation"],
     "decision": ["decisions", "assess", "assessment", "evaluation"],
     "hiring": ["employment", "recruitment", "resume", "cv", "worker", "promotion", "termination"],
-    "screening": ["employment", "recruitment", "resume", "cv", "admission", "enrollment"],
+    "screening": ["employment", "recruitment", "resume", "cv"],
     "proctoring": ["education", "admission", "evaluation", "assessment"]
+}
+
+# Terms that are individually too generic/ubiquitous across unrelated framework
+# categories to serve as reliable match signals on their own (e.g. "service"
+# appears in "essential_services", "essential_government_service", "legal
+# services", etc. regardless of actual relevance — matching on it alone
+# produced spurious high-risk hits for things like a plain customer-service
+# chatbot). Excluded from search_keywords entirely, whether typed directly
+# or pulled in via SYNONYM_MAP expansion.
+GENERIC_KEYWORD_BLOCKLIST = {
+    "service", "services", "decision", "decisions",
+    "assessment", "evaluation", "assess",
 }
 
 # Stop words to ignore during query tokenization
 STOP_WORDS = {
-    "with", "without", "and", "or", "but", "the", "for", "in", "on", "at", "by", "from", 
-    "to", "of", "a", "an", "this", "that", "these", "those", "is", "are", "was", "were", 
-    "be", "been", "have", "has", "had", "do", "does", "did", "not", "no", "yes", "any", 
-    "some", "all", "each", "both", "either", "neither", "can", "could", "shall", "should", 
+    "with", "without", "and", "or", "but", "the", "for", "in", "on", "at", "by", "from",
+    "to", "of", "a", "an", "this", "that", "these", "those", "is", "are", "was", "were",
+    "be", "been", "have", "has", "had", "do", "does", "did", "not", "no", "yes", "any",
+    "some", "all", "each", "both", "either", "neither", "can", "could", "shall", "should",
     "will", "would", "may", "might", "must"
 }
+
+
+def _kw_match(kw: str, text: str) -> bool:
+    """Whole-word match (with a tolerant trailing 's' for simple plurals),
+    not substring containment. Plain `kw in text` let "termination" match
+    inside "determination" and "using" match inside "housing", producing
+    false positives — word boundaries fix that whole class of collision
+    instead of special-casing individual words. The optional trailing 's'
+    only relaxes the END boundary (so "chatbot" still matches "chatbots"),
+    it doesn't reopen the START-boundary collisions above."""
+    return re.search(r"\b" + re.escape(kw) + r"s?\b", text) is not None
 
 def _load_framework_json(name: str) -> dict:
     file_path = FRAMEWORKS_DIR / f"{name}.json"
@@ -136,10 +164,10 @@ def search_frameworks(use_case_description: str) -> str:
     raw_words = [w.strip(".,;:?!()\"'").lower() for w in use_case_description.split()]
     search_keywords = set()
     for w in raw_words:
-        if len(w) > 2 and w not in STOP_WORDS:
+        if len(w) > 2 and w not in STOP_WORDS and w not in GENERIC_KEYWORD_BLOCKLIST:
             search_keywords.add(w)
             if w in SYNONYM_MAP:
-                search_keywords.update(SYNONYM_MAP[w])
+                search_keywords.update(s for s in SYNONYM_MAP[w] if s not in GENERIC_KEYWORD_BLOCKLIST)
 
     for fw in frameworks:
         data = _load_framework_json(fw)
@@ -155,7 +183,7 @@ def search_frameworks(use_case_description: str) -> str:
                 tier_str = json.dumps(tier_data).lower()
                 matched_for_tier = []
                 for kw in search_keywords:
-                    if kw in tier_str:
+                    if _kw_match(kw, tier_str):
                         # Find specific category details. Different frameworks
                         # name their category-breakdown dict differently (EU
                         # AI Act uses "annex_iii_categories", Colorado SB 205
@@ -167,10 +195,10 @@ def search_frameworks(use_case_description: str) -> str:
                         for category_dict_key in ("annex_iii_categories", "consequential_decision_categories"):
                             categories = criteria.get(category_dict_key, {})
                             for cat_key, cat_val in categories.items():
-                                if kw in cat_val.lower():
+                                if _kw_match(kw, cat_val.lower()):
                                     annex_matches.append(f"{category_dict_key} '{cat_key}': {cat_val}")
 
-                        examples_matched = [ex for ex in tier_data.get("criteria", {}).get("examples", []) if kw in ex.lower()]
+                        examples_matched = [ex for ex in tier_data.get("criteria", {}).get("examples", []) if _kw_match(kw, ex.lower())]
                         
                         if annex_matches or examples_matched:
                             detail = ""
@@ -192,9 +220,9 @@ def search_frameworks(use_case_description: str) -> str:
                 func_str = json.dumps(func_data).lower()
                 matched_for_func = []
                 for kw in search_keywords:
-                    if kw in func_str:
-                        triggered_elevated = [t for t in func_data.get("elevated_attention_triggers", []) if kw in t.lower()]
-                        triggered_critical = [t for t in func_data.get("critical_attention_triggers", []) if kw in t.lower()]
+                    if _kw_match(kw, func_str):
+                        triggered_elevated = [t for t in func_data.get("elevated_attention_triggers", []) if _kw_match(kw, t.lower())]
+                        triggered_critical = [t for t in func_data.get("critical_attention_triggers", []) if _kw_match(kw, t.lower())]
                         
                         if triggered_critical or triggered_elevated:
                             detail = ""

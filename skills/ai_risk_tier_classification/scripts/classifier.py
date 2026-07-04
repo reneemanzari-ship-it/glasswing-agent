@@ -137,6 +137,48 @@ def local_classify(initiative: Initiative) -> RiskProfile:
     if is_credit_scenario and initiative.ai_system.autonomy_level.value == "fully_autonomous":
         human_review = True
         reasons.append("High stakes consumer credit system deployed without human-in-the-loop oversight.")
+    if is_recruitment_scenario and initiative.ai_system.hitl_planned.value in ("no", "unknown"):
+        human_review = True
+        reasons.append(
+            "High stakes employment decision system reports hitl_planned="
+            f"{initiative.ai_system.hitl_planned.value}; human oversight not confirmed."
+        )
+
+    # Missing mandatory control detection: EU AI Act Article 14 (Human Oversight)
+    # and Colorado SB 205's Right to Appeal and Human Review are both mandatory
+    # for the High-Risk tier. Flag the gap when neither hitl_planned nor
+    # existing_controls shows evidence of a human-oversight control.
+    if overall == OverallRiskTier.HIGH:
+        has_human_oversight_control = initiative.ai_system.hitl_planned.value in ("yes", "partial") or any(
+            kw in c.lower() for c in initiative.existing_controls for kw in ("human", "appeal", "oversight")
+        )
+        if not has_human_oversight_control:
+            human_review = True
+            reasons.append(
+                "Mandatory control gap: EU AI Act Article 14 (Human Oversight) and Colorado SB 205 "
+                "Right to Appeal and Human Review are required for this tier, but the initiative "
+                "reports no human-in-the-loop and no equivalent control in existing_controls."
+            )
+
+    # Confidence reflects intake certainty, not just tier certainty: if a field
+    # material to classification is unconfirmed, or overall intake completeness
+    # is low, cap confidence and force human review rather than reporting
+    # unwarranted certainty.
+    material_unknown_fields = {"ai_system.autonomy_level", "ai_system.hitl_planned"}
+    ambiguous_intake = (
+        any(u in material_unknown_fields for u in initiative.intake_metadata.unknowns)
+        or initiative.intake_metadata.completeness_score < 0.75
+        or initiative.ai_system.hitl_planned.value == "unknown"
+    )
+    if ambiguous_intake:
+        eu_act.confidence = min(eu_act.confidence, 0.84)
+        nist.confidence = min(nist.confidence, 0.84)
+        co_sb.confidence = min(co_sb.confidence, 0.84)
+        human_review = True
+        reasons.append(
+            "Classification confidence capped: intake data material to classification "
+            "(autonomy level and/or HITL plan) is unknown or incompletely confirmed."
+        )
 
     return RiskProfile(
         initiative_id=initiative.initiative_id,
