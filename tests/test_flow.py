@@ -1,14 +1,17 @@
+import json
 import pytest
 from pathlib import Path
 from datetime import date
 from uuid import uuid4
 from orchestration.flow import GlasswingGovernanceOrchestrator
+from agents.portfolio_manager import query_sqlite_data
 from schemas.initiative import (
     Initiative, Sponsor, AISystemCharacteristics, DataCharacteristics,
     ImpactCharacteristics, IntakeMetadata, AISystemType, AutonomyLevel,
     HITLPlanned, DataSensitivity, UserScope, BusinessImpactTier, Reversibility
 )
 from schemas.risk_profile import EUAIActTier, NISTAttentionLevel, OverallRiskTier
+from schemas.portfolio_state import InitiativeStatus
 
 def test_governance_pipeline_flow():
     test_db = "glasswing_test_temp.db"
@@ -108,8 +111,7 @@ def test_247am_loan_scenario_flow():
         assert db_state.total_initiatives == 1
         
         # Verify specific portfolio SQLite properties
-        res_json = orchestrator.portfolio_manager.query_sqlite_data("SELECT manifest_json FROM initiatives WHERE id = ?", (str(loan_initiative.initiative_id),))
-        import json
+        res_json = query_sqlite_data("SELECT manifest_json FROM initiatives WHERE id = ?", (str(loan_initiative.initiative_id),))
         rows = json.loads(res_json)
         assert len(rows) == 1
         manifest_obj = json.loads(rows[0]["manifest_json"])
@@ -137,7 +139,27 @@ def test_247am_loan_scenario_flow():
         
         # 6. human_review_required is True
         assert risk_profile.human_review_required is True
-        
+
+        # 7. Portfolio Manager must not silently wave this through to
+        #    APPROVED_FOR_BUILD or a generic CONTROL_PRESCRIPTION_PENDING —
+        #    a fully autonomous, no-HITL consumer credit system flagged for
+        #    human review must land in REQUIRES_REVISION_BEFORE_APPROVAL,
+        #    with a rationale citing the specific gap.
+        status_row = json.loads(
+            query_sqlite_data(
+                "SELECT status FROM initiatives WHERE id = ?", (str(loan_initiative.initiative_id),)
+            )
+        )
+        assert status_row[0]["status"] == InitiativeStatus.REQUIRES_REVISION_BEFORE_APPROVAL.value
+
+        transitions = json.loads(
+            query_sqlite_data(
+                "SELECT to_status, reason FROM transitions WHERE initiative_id = ?", (str(loan_initiative.initiative_id),)
+            )
+        )
+        assert transitions[0]["to_status"] == InitiativeStatus.REQUIRES_REVISION_BEFORE_APPROVAL.value
+        assert "human-in-the-loop" in transitions[0]["reason"].lower() or "hitl" in transitions[0]["reason"].lower()
+
         assert verified is True
 
     finally:

@@ -23,6 +23,7 @@ class InitiativeStatus(str, Enum):
     AWAITING_DEPLOYMENT_GATE = "awaiting_deployment_gate"
     DEPLOYED = "deployed"
     REQUIRES_REVISION = "requires_revision"
+    REQUIRES_REVISION_BEFORE_APPROVAL = "requires_revision_before_approval"
     PARKED = "parked"
     KILLED = "killed"
 

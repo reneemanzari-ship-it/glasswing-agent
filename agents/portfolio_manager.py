@@ -10,15 +10,106 @@ import os
 import sqlite3
 import json
 from pathlib import Path
-from datetime import datetime
-from typing import Dict, Any, List, Optional
+from datetime import date, datetime
+from typing import Dict, Any, List, Optional, Tuple
 from google.adk import Agent
 
-from schemas.initiative import Initiative
-from schemas.risk_profile import RiskProfile
+from schemas.initiative import Initiative, HITLPlanned
+from schemas.risk_profile import RiskProfile, OverallRiskTier
 from schemas.control_prescription import ControlPrescription
 from schemas.governance_manifest import GovernanceManifest, ManifestStatus
 from schemas.portfolio_state import PortfolioState, InitiativeStatus, InitiativeSummary, StateTransition
+
+CONFIDENCE_REVIEW_THRESHOLD = 0.75
+
+
+def _determine_initiative_status(
+    initiative: Initiative,
+    risk_profile: RiskProfile,
+    control_prescription: ControlPrescription,
+) -> Tuple[InitiativeStatus, str]:
+    """Decides the InitiativeStatus to assign after control prescription,
+    and the rationale that must be cited on the state transition record.
+
+    Precedence:
+    1. Low-confidence framework classifications (<0.75) route to
+       AWAITING_HUMAN_REVIEW — this is a triage/analyst-review state,
+       kept distinct from substantive governance gaps.
+    2. Any other RiskProfile.human_review_required flag, or a concrete
+       gap between what ControlPrescription mandates and what the
+       Initiative currently has in place (HITL, audit artifacts,
+       regulatory submission lead time), routes to
+       REQUIRES_REVISION_BEFORE_APPROVAL.
+    3. Otherwise, fall back to the coarse risk-tier gate.
+    """
+    low_confidence_frameworks = [
+        name
+        for name, classification in (
+            ("eu_ai_act", risk_profile.classifications.eu_ai_act),
+            ("nist_ai_rmf", risk_profile.classifications.nist_ai_rmf),
+            ("colorado_sb_205", risk_profile.classifications.colorado_sb_205),
+        )
+        if classification.confidence < CONFIDENCE_REVIEW_THRESHOLD
+    ]
+    if low_confidence_frameworks:
+        return InitiativeStatus.AWAITING_HUMAN_REVIEW, (
+            f"Classification confidence below {CONFIDENCE_REVIEW_THRESHOLD} for: "
+            f"{', '.join(low_confidence_frameworks)}. Requires analyst review "
+            f"before further pipeline processing."
+        )
+
+    gaps: List[str] = []
+
+    mandatory_hitl_touchpoints = [
+        t for t in control_prescription.controls.hitl_touchpoints if t.mandatory
+    ]
+    if mandatory_hitl_touchpoints and initiative.ai_system.hitl_planned == HITLPlanned.NO:
+        triggers = "; ".join(t.trigger_description for t in mandatory_hitl_touchpoints)
+        citations = ", ".join(
+            sorted({f.value for t in mandatory_hitl_touchpoints for f in t.source_framework})
+        )
+        gaps.append(
+            f"HITL required ({triggers}) per {citations}, but initiative has "
+            f"hitl_planned=no."
+        )
+
+    # AuditArtifactRequirement has no `mandatory` flag of its own — every
+    # entry the Control Prescription agent lists is a requirement.
+    mandatory_audit_types = {
+        a.artifact_type for a in control_prescription.controls.audit_artifacts
+    }
+    missing_audit_artifacts = mandatory_audit_types - set(initiative.existing_controls)
+    if missing_audit_artifacts:
+        gaps.append(
+            f"Mandatory audit artifact(s) not present in existing_controls: "
+            f"{', '.join(sorted(missing_audit_artifacts))}."
+        )
+
+    if initiative.target_deployment_date:
+        days_to_deploy = (initiative.target_deployment_date - date.today()).days
+        for submission in control_prescription.controls.regulatory_submissions:
+            if submission.mandatory and days_to_deploy < submission.submission_deadline_days_before_deployment:
+                gaps.append(
+                    f"Mandatory regulatory submission '{submission.submission_type}' to "
+                    f"{submission.submission_authority} requires "
+                    f"{submission.submission_deadline_days_before_deployment} days' lead time "
+                    f"before deployment, but target deployment is only {days_to_deploy} day(s) away."
+                )
+
+    if gaps or risk_profile.human_review_required:
+        rationale_parts = gaps if gaps else list(risk_profile.human_review_reasons)
+        if not rationale_parts:
+            rationale_parts = ["Flagged for human review by Risk Classifier."]
+        return InitiativeStatus.REQUIRES_REVISION_BEFORE_APPROVAL, " ".join(rationale_parts)
+
+    if risk_profile.overall_risk_tier in (OverallRiskTier.HIGH, OverallRiskTier.CRITICAL):
+        return InitiativeStatus.CONTROL_PRESCRIPTION_PENDING, (
+            "High/critical risk tier requires control prescription review before build approval."
+        )
+
+    return InitiativeStatus.APPROVED_FOR_BUILD, (
+        "Low/moderate risk tier with no outstanding mandatory control gaps."
+    )
 
 # Global DB Path
 DB_PATH = "glasswing_governance.db"
@@ -84,7 +175,6 @@ class PortfolioManagerAgent:
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
                 description TEXT,
-                intended_use TEXT,
                 status TEXT NOT NULL,
                 risk_tier TEXT,
                 last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -104,11 +194,11 @@ class PortfolioManagerAgent:
             )
         """)
 
-    def register_initiative(self, 
-                            initiative: Initiative, 
-                            risk_profile: RiskProfile, 
+    def register_initiative(self,
+                            initiative: Initiative,
+                            risk_profile: RiskProfile,
                             control_prescription: ControlPrescription,
-                            transitioned_by: str = "system") -> GovernanceManifest:
+                            transitioned_by: str = "system") -> Tuple[GovernanceManifest, InitiativeStatus, str]:
         """Invokes SQLite tools to log the new initiative and creates the versioned manifest."""
         import hashlib
         manifest_data = {
@@ -134,19 +224,18 @@ class PortfolioManagerAgent:
             executive_summary=control_prescription.executive_summary
         )
 
-        status_assigned = InitiativeStatus.CLASSIFICATION_PENDING
-        if risk_profile.overall_risk_tier == OverallRiskTier.HIGH or risk_profile.overall_risk_tier == OverallRiskTier.CRITICAL:
-            status_assigned = InitiativeStatus.CONTROL_PRESCRIPTION_PENDING
+        status_assigned, transition_rationale = _determine_initiative_status(
+            initiative, risk_profile, control_prescription
+        )
 
         # Run insertions using SQLite commands
         execute_sqlite_command("""
-            INSERT OR REPLACE INTO initiatives (id, name, description, intended_use, status, risk_tier, last_updated, manifest_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO initiatives (id, name, description, status, risk_tier, last_updated, manifest_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
             str(initiative.initiative_id),
             initiative.name,
             initiative.description,
-            initiative.intended_use,
             status_assigned.value,
             risk_profile.overall_risk_tier.value,
             datetime.utcnow().isoformat(),
@@ -162,10 +251,10 @@ class PortfolioManagerAgent:
             status_assigned.value,
             transitioned_by,
             datetime.utcnow().isoformat(),
-            "Completed onboarding and initial framework risk review."
+            transition_rationale
         ))
-        
-        return manifest
+
+        return manifest, status_assigned, transition_rationale
 
     def update_status(self, initiative_id: str, new_status: InitiativeStatus, transitioned_by: str, reason: str):
         """Updates initiative state in SQLite database."""

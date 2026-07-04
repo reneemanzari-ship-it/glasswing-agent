@@ -54,12 +54,21 @@ class ControlPrescriptionAgent:
         if not self.api_key:
             # Fallback simulator for offline mode / testing
             from decimal import Decimal
-            from schemas.control_prescription import Controls, DeploymentGate, ImplementationEffort, Guardrail, ControlCategory, SourceFramework
-            
-            # Simple mock matches
-            eu_controls = []
-            if risk_profile.classifications.eu_ai_act.tier == "high_risk":
-                eu_controls = [
+            from schemas.control_prescription import (
+                Controls, DeploymentGate, ImplementationEffort, Guardrail, ControlCategory,
+                SourceFramework, HITLTouchpoint, MonitoringRequirement, AuditArtifactRequirement
+            )
+
+            guardrails = []
+            hitl_touchpoints = []
+            monitoring = []
+            audit_artifacts = []
+
+            is_eu_high_risk = risk_profile.classifications.eu_ai_act.tier == "high_risk"
+            is_financial_lending = risk_profile.classifications.colorado_sb_205.high_risk_category == "financial_lending"
+
+            if is_eu_high_risk:
+                guardrails.append(
                     Guardrail(
                         control_id="GR-0001",
                         category=ControlCategory.INPUT_VALIDATION,
@@ -69,13 +78,62 @@ class ControlPrescriptionAgent:
                         source_framework=[SourceFramework.EU_AI_ACT],
                         source_citation="Article 10"
                     )
-                ]
-            
+                )
+                guardrails.append(
+                    Guardrail(
+                        control_id="GR-0002",
+                        category=ControlCategory.CONFIDENCE_THRESHOLD,
+                        description="Minimum model confidence threshold of 0.95 for autonomous decisions.",
+                        implementation_notes="Any decision where model confidence falls below 0.95 must be routed to human review rather than auto-approved.",
+                        mandatory=True,
+                        source_framework=[SourceFramework.EU_AI_ACT, SourceFramework.NIST_AI_RMF],
+                        source_citation="EU AI Act Article 14; NIST AI RMF MANAGE-1"
+                    )
+                )
+
+            if is_financial_lending:
+                hitl_touchpoints.append(
+                    HITLTouchpoint(
+                        control_id="HITL-0001",
+                        trigger_description="Consequential consumer lending decisions above $500,000 require human review before finalization.",
+                        trigger_quantitative="loan_amount > 500000",
+                        reviewer_role="Senior Credit Underwriter",
+                        review_sla_hours=24,
+                        mandatory=True,
+                        source_framework=[SourceFramework.EU_AI_ACT, SourceFramework.COLORADO_SB_205]
+                    )
+                )
+                monitoring.append(
+                    MonitoringRequirement(
+                        control_id="MON-0001",
+                        metric="Approval/denial disparity across protected classes; model confidence distribution",
+                        cadence="real-time",
+                        alerting_threshold="Disparate impact ratio outside 0.8-1.25 (four-fifths rule)",
+                        on_call_role="ML Risk Monitoring Team",
+                        mandatory=True
+                    )
+                )
+                audit_artifacts.append(
+                    AuditArtifactRequirement(
+                        control_id="AUD-0001",
+                        artifact_type="Consumer lending decision audit trail (inputs, score, rationale, outcome)",
+                        retention_years=7,
+                        regulator_format_required=True,
+                        replay_capability_required=True,
+                        source_framework=[SourceFramework.COLORADO_SB_205, SourceFramework.EU_AI_ACT]
+                    )
+                )
+
             return ControlPrescription(
                 initiative_id=risk_profile.initiative_id,
                 risk_profile_id=risk_profile.risk_profile_id,
                 risk_tier_assessed=risk_profile.overall_risk_tier.value,
-                controls=Controls(guardrails=eu_controls),
+                controls=Controls(
+                    guardrails=guardrails,
+                    hitl_touchpoints=hitl_touchpoints,
+                    monitoring=monitoring,
+                    audit_artifacts=audit_artifacts,
+                ),
                 deployment_gate=DeploymentGate(
                     approvers_required=["Compliance Officer"],
                     pre_deployment_artifacts_required=["Model Assessment"]

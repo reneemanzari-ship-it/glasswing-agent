@@ -45,7 +45,6 @@ class RiskClassifierAgent:
         Please classify the following AI initiative:
         Name: {initiative.name}
         Description: {initiative.description}
-        Intended Use: {initiative.intended_use}
         AI Type: {initiative.ai_system.type.value}
         Autonomy Level: {initiative.ai_system.autonomy_level.value}
         Data sensitivity classes: {', '.join([s.value for s in initiative.data.sensitivity])}

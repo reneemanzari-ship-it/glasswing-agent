@@ -3,10 +3,15 @@ import uuid
 import pytest
 from pathlib import Path
 from datetime import date
+from typing import Optional, Tuple
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from orchestration.flow import GlasswingGovernanceOrchestrator
+# NOTE: orchestration.flow is imported lazily inside run_adversarial_tests()
+# below, not at module level. agents/onboarding_intake.py imports
+# detect_adversarial_input from this module, and orchestration/flow.py
+# imports agents/onboarding_intake.py — a top-level import of
+# orchestration.flow here would create an import cycle.
 from schemas.initiative import (
     Initiative, Sponsor, AISystemCharacteristics, DataCharacteristics,
     ImpactCharacteristics, IntakeMetadata, AISystemType, AutonomyLevel,
@@ -14,6 +19,31 @@ from schemas.initiative import (
 )
 from schemas.risk_profile import EUAIActTier, OverallRiskTier
 from skills.ai_risk_tier_classification.scripts.classifier import local_classify
+
+# Single source of truth for prompt-injection / instruction-override
+# detection. agents/onboarding_intake.py imports detect_adversarial_input
+# directly from this module rather than duplicating the pattern list —
+# add new patterns here only.
+ADVERSARIAL_INDICATORS = [
+    "ignore previous instructions",
+    "you are now",
+    "your new role is",
+    "system:",
+]
+
+
+def detect_adversarial_input(text: str) -> Tuple[bool, Optional[str]]:
+    """Checks text for known prompt-injection / instruction-override patterns.
+
+    Returns (is_adversarial, matched_indicator). matched_indicator is None
+    when no pattern is found.
+    """
+    text_lower = text.lower()
+    for indicator in ADVERSARIAL_INDICATORS:
+        if indicator in text_lower:
+            return True, indicator
+    return False, None
+
 
 # Test payload list simulating various red-teaming/adversarial bypass attempts
 ADVERSARIAL_CASES = [
@@ -38,6 +68,9 @@ INJECTION_PAYLOADS = [
 ]
 
 def run_adversarial_tests() -> bool:
+    # Deferred import — see note at top of file re: import cycle.
+    from orchestration.flow import GlasswingGovernanceOrchestrator
+
     print("=== Running Glasswing Adversarial Testing Suite ===")
     all_passed = True
     orchestrator = GlasswingGovernanceOrchestrator()
@@ -90,11 +123,9 @@ def run_adversarial_tests() -> bool:
     # 2. Prompt Injection Defense and Halting Tests
     print("\n--- Running Prompt Injection Defense and Flow Halting Tests ---")
     for payload in INJECTION_PAYLOADS:
-        # Check string contains injection triggers
-        input_lower = payload.lower()
-        adversarial_indicators = ["ignore previous instructions", "you are now", "your new role is", "system:"]
-        is_injection = any(indicator in input_lower for indicator in adversarial_indicators)
-        
+        # Use the shared detection function — single source of truth
+        is_injection, matched_indicator = detect_adversarial_input(payload)
+
         # Build flagged metadata simulation
         metadata = IntakeMetadata(
             completeness_score=0.5,
@@ -102,7 +133,7 @@ def run_adversarial_tests() -> bool:
             intake_agent_version="1.0.0",
             prompt_manifest_sha="a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
             adversarial_flag=is_injection,
-            adversarial_reason=f"Injection prompt trigger: '{payload[:30]}...'"
+            adversarial_reason=f"Injection pattern detected: '{matched_indicator}'"
         )
         
         init = Initiative(
