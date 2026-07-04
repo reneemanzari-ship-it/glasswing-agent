@@ -1,0 +1,60 @@
+{
+  "framework_id": "colorado_sb_205",
+  "name": "Colorado SB 24-205 (AI Consumer Protections)",
+  "description": "Colorado state law regulating high-risk AI systems making consequential decisions affecting consumers. Effective February 1, 2026.",
+  "source_url": "https://leg.colorado.gov/bills/sb24-205",
+  "version": "Signed May 17, 2024",
+  "tiers": {
+    "high_risk_consequential": {
+      "name": "High-Risk AI Making Consequential Decisions",
+      "criteria": {
+        "summary": "AI systems that make, or are a substantial factor in making, a consequential decision affecting consumers.",
+        "consequential_decision_categories": {
+          "education": "Educational enrollment or educational opportunity",
+          "employment": "Employment or employment opportunity (hiring, firing, promotion, terms of compensation)",
+          "financial_lending": "Financial or lending services (loan approval, credit, interest rate determination)",
+          "essential_government_service": "Essential government services",
+          "healthcare": "Healthcare services",
+          "housing": "Housing (rental decisions, mortgage)",
+          "insurance": "Insurance (issuance, pricing, claims handling)",
+          "legal_services": "Legal services"
+        },
+        "substantial_factor_definition": "An AI system is a 'substantial factor' if it: (a) assists in making a consequential decision; (b) is capable of altering the outcome of the decision; (c) is used to generate any content, decision, prediction, or recommendation related to the consumer."
+      },
+      "citations": [
+        "C.R.S. § 6-1-1701 (definitions)",
+        "C.R.S. § 6-1-1702 (developer duties)",
+        "C.R.S. § 6-1-1703 (deployer duties)",
+        "C.R.S. § 6-1-1704 (consumer rights)"
+      ],
+      "required_controls": [
+        "REASONABLE_CARE_TO_PREVENT_ALGORITHMIC_DISCRIMINATION",
+        "RISK_MANAGEMENT_POLICY_AND_PROGRAM",
+        "IMPACT_ASSESSMENT_PRE_DEPLOYMENT",
+        "IMPACT_ASSESSMENT_ANNUAL",
+        "CONSUMER_NOTICE_AI_USE",
+        "CONSUMER_NOTICE_CONSEQUENTIAL_DECISION_DRIVERS",
+        "RIGHT_TO_CORRECT_INCORRECT_PERSONAL_DATA",
+        "RIGHT_TO_APPEAL_AND_HUMAN_REVIEW",
+        "DISCLOSURE_TO_ATTORNEY_GENERAL_ON_REQUEST",
+        "ALGORITHMIC_DISCRIMINATION_INCIDENT_DISCLOSURE"
+      ]
+    },
+    "not_applicable": {
+      "name": "Not Subject to SB 205",
+      "criteria": {
+        "summary": "AI systems not making consequential decisions, or that fall under specific exemptions.",
+        "exemptions": [
+          "Anti-fraud, anti-money-laundering, cybersecurity systems",
+          "Anti-virus and similar security technologies",
+          "Calculators and database management",
+          "Internet domain registration",
+          "AI systems used solely for research",
+          "Systems compliant with federal law providing equivalent protection"
+        ]
+      },
+      "citations": ["C.R.S. § 6-1-1701(7)(b)"],
+      "required_controls": ["NO_SB_205_OBLIGATIONS"]
+    }
+  }
+}

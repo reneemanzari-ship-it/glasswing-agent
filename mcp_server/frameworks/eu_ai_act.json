@@ -1,0 +1,91 @@
+{
+  "framework_id": "eu_ai_act",
+  "name": "EU Artificial Intelligence Act",
+  "description": "EU regulation classifying AI systems by risk level. Full enforcement: August 2, 2026.",
+  "source_url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
+  "version": "2024-06-13",
+  "tiers": {
+    "prohibited": {
+      "name": "Prohibited Practices (Article 5)",
+      "criteria": {
+        "summary": "AI systems posing unacceptable risk. Banned in the EU.",
+        "examples": [
+          "Social scoring by public authorities",
+          "Real-time biometric identification in public spaces (with narrow exceptions)",
+          "Subliminal manipulation techniques",
+          "Exploitation of vulnerabilities of specific groups",
+          "Biometric categorization based on sensitive characteristics",
+          "Untargeted scraping of facial images for facial recognition databases"
+        ]
+      },
+      "citations": ["Article 5"],
+      "required_controls": ["DEPLOYMENT_PROHIBITED"]
+    },
+    "high_risk": {
+      "name": "High-Risk AI Systems (Annex III)",
+      "criteria": {
+        "summary": "AI systems used in specific high-impact sectors. Subject to extensive compliance requirements.",
+        "annex_iii_categories": {
+          "1_biometrics": "Biometric identification, categorization, and emotion recognition",
+          "2_critical_infrastructure": "Critical infrastructure management (traffic, water, gas, electricity)",
+          "3_education": "Education and vocational training (admission, evaluation, assessment)",
+          "4_employment": "Employment, worker management, access to self-employment (recruitment, promotion, termination decisions)",
+          "5_essential_services": "Access to essential services: (a) public benefits eligibility, (b) credit scoring or creditworthiness evaluation of natural persons, (c) risk assessment and pricing of life and health insurance, (d) emergency response services",
+          "6_law_enforcement": "Law enforcement (with narrow exceptions)",
+          "7_migration_asylum_border": "Migration, asylum, border control",
+          "8_justice_democracy": "Administration of justice and democratic processes"
+        }
+      },
+      "citations": [
+        "Article 6",
+        "Annex III",
+        "Articles 8-15 (requirements)",
+        "Article 16 (provider obligations)"
+      ],
+      "required_controls": [
+        "RISK_MANAGEMENT_SYSTEM (Article 9)",
+        "DATA_GOVERNANCE (Article 10)",
+        "TECHNICAL_DOCUMENTATION (Article 11)",
+        "RECORD_KEEPING (Article 12)",
+        "TRANSPARENCY_AND_USER_INFORMATION (Article 13)",
+        "HUMAN_OVERSIGHT (Article 14)",
+        "ACCURACY_ROBUSTNESS_CYBERSECURITY (Article 15)",
+        "CONFORMITY_ASSESSMENT (Article 43)",
+        "EU_DATABASE_REGISTRATION (Article 49)",
+        "POST_MARKET_MONITORING (Article 72)",
+        "INCIDENT_REPORTING (Article 73)"
+      ]
+    },
+    "limited_risk": {
+      "name": "Limited Risk (Transparency Obligations)",
+      "criteria": {
+        "summary": "AI systems with specific transparency obligations. Users must be informed they are interacting with AI.",
+        "examples": [
+          "Chatbots and conversational AI",
+          "Emotion recognition systems (where allowed)",
+          "Deepfakes and synthetic content",
+          "Biometric categorization (where allowed)"
+        ]
+      },
+      "citations": ["Article 50"],
+      "required_controls": [
+        "USER_NOTIFICATION_OF_AI_INTERACTION",
+        "AI_GENERATED_CONTENT_LABELING",
+        "DEEPFAKE_DISCLOSURE"
+      ]
+    },
+    "minimal_risk": {
+      "name": "Minimal or No Risk",
+      "criteria": {
+        "summary": "All other AI systems. Voluntary codes of conduct only.",
+        "examples": [
+          "AI-powered spam filters",
+          "AI in video games",
+          "Inventory management AI"
+        ]
+      },
+      "citations": ["No specific articles"],
+      "required_controls": ["VOLUNTARY_CODES_OF_CONDUCT"]
+    }
+  }
+}

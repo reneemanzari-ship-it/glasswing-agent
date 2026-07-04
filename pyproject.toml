@@ -1,0 +1,36 @@
+[project]
+name = "glasswing"
+version = "0.1.0"
+description = "A multi-agent AI governance system for automated compliance and risk tier classification"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "google-adk>=2.3.0",
+    "mcp>=1.2.0",
+    "anthropic>=0.26.0",
+    "pydantic>=2.7.0",
+    "streamlit>=1.35.0",
+    "python-dotenv>=1.0.1"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "ruff>=0.4.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B"]
+ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

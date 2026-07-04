@@ -1,0 +1,92 @@
+{
+  "framework_id": "nist_ai_rmf",
+  "name": "NIST AI Risk Management Framework 1.0",
+  "description": "Voluntary framework providing structured guidance for AI risk management. Function-based rather than tier-based.",
+  "source_url": "https://www.nist.gov/itl/ai-risk-management-framework",
+  "version": "1.0 (January 2023) with Generative AI Profile (July 2024)",
+  "functions": {
+    "govern": {
+      "name": "GOVERN",
+      "description": "A culture of risk management is cultivated and present. Policies, processes, procedures, and practices across the organization to enable and improve AI risk management.",
+      "categories": [
+        "GV-1: Policies, processes, procedures, and practices",
+        "GV-2: Accountability structures",
+        "GV-3: Workforce composition and competencies",
+        "GV-4: Organizational teams document AI risks",
+        "GV-5: Engagement with relevant AI actors",
+        "GV-6: Address AI risks from third party software and data"
+      ],
+      "elevated_attention_triggers": [
+        "AI system in production without documented risk policy",
+        "Use of third-party LLMs or vendor AI without due diligence",
+        "AI initiative spanning multiple business units without clear accountability"
+      ],
+      "critical_attention_triggers": [
+        "AI system deployed in regulated industry without formal risk committee oversight",
+        "AI vendor relationship without contractual risk allocation",
+        "AI initiative crossing jurisdictional boundaries without legal review"
+      ]
+    },
+    "map": {
+      "name": "MAP",
+      "description": "Context is recognized and risks related to context are identified. Establishes the foundation for risk identification.",
+      "categories": [
+        "MP-1: Context is established and understood",
+        "MP-2: Categorization of the AI system is performed",
+        "MP-3: AI capabilities, targeted usage, goals, and expected benefits documented",
+        "MP-4: Risks and benefits are mapped for all components",
+        "MP-5: Impacts to individuals, groups, communities, and society characterized"
+      ],
+      "elevated_attention_triggers": [
+        "AI affects consumers or vulnerable populations",
+        "Cross-border data flow",
+        "Use of biometric or sensitive data"
+      ],
+      "critical_attention_triggers": [
+        "Consequential decisions affecting natural persons (credit, hiring, healthcare)",
+        "Foundation model use without provenance documentation",
+        "Use cases involving children or other protected populations"
+      ]
+    },
+    "measure": {
+      "name": "MEASURE",
+      "description": "Identified risks are assessed, analyzed, and tracked. Encompasses both quantitative and qualitative metrics.",
+      "categories": [
+        "MS-1: Appropriate methods and metrics are identified and applied",
+        "MS-2: AI systems are evaluated for trustworthy characteristics",
+        "MS-3: Mechanisms for tracking identified AI risks over time",
+        "MS-4: Feedback about efficacy of measurement is gathered"
+      ],
+      "elevated_attention_triggers": [
+        "Lack of pre-deployment evaluation metrics",
+        "No drift monitoring planned",
+        "Single-metric evaluation (accuracy only) without fairness or robustness assessment"
+      ],
+      "critical_attention_triggers": [
+        "High-stakes AI without quantitative fairness assessment",
+        "Generative AI without hallucination rate measurement",
+        "AI system with measured performance significantly below claimed performance"
+      ]
+    },
+    "manage": {
+      "name": "MANAGE",
+      "description": "Risks are prioritized and acted upon based on a projected impact. Allocation of resources and ongoing risk treatment.",
+      "categories": [
+        "MG-1: AI risks based on assessments are prioritized, responded to, managed",
+        "MG-2: Strategies to maximize AI benefits and minimize negative impacts",
+        "MG-3: AI risks and benefits from third-party entities managed",
+        "MG-4: Risk treatments documented and monitored regularly"
+      ],
+      "elevated_attention_triggers": [
+        "Risk treatment plan absent",
+        "No incident response runbook for AI failures",
+        "No defined ownership for ongoing AI risk management"
+      ],
+      "critical_attention_triggers": [
+        "High-risk AI deployed without HITL or rollback mechanism",
+        "No incident management process for AI-driven decisions",
+        "Risks identified during MAP not addressed in MANAGE"
+      ]
+    }
+  }
+}
