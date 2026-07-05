@@ -3,7 +3,7 @@ name = "glasswing"
 version = "0.1.0"
 description = "A multi-agent AI governance system for automated compliance and risk tier classification"
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.11"
 dependencies = [
     "google-adk>=2.3.0",
     "mcp>=1.2.0",
@@ -22,6 +22,14 @@ dev = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+# hatchling can't auto-detect packages here: the project name ("glasswing")
+# doesn't match any top-level directory -- the code is split across several
+# top-level packages instead of one src/glasswing/ layout. Without this,
+# `pip install -e .` fails immediately on a clean checkout with "Unable to
+# determine which files to ship inside the wheel."
+[tool.hatch.build.targets.wheel]
+packages = ["agents", "schemas", "orchestration", "mcp_server", "security", "skills", "ui"]
 
 [tool.ruff]
 line-length = 88

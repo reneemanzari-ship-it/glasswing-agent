@@ -100,9 +100,9 @@ print(profile.classifications.eu_ai_act.tier)  # -> high_risk
 print(profile.human_review_required)           # -> True (autonomy/HITL unconfirmed from text alone)
 ```
 
-**3. Command line:**
+**3. Command line (run from the repo root, since this is invoked as a module):**
 ```bash
-python -m skills.ai_risk_tier_classification --input examples/example_high_risk_loan.json
+python -m skills.ai_risk_tier_classification --input skills/ai_risk_tier_classification/examples/example_high_risk_loan.json
 # or
 python -m skills.ai_risk_tier_classification --description "AI chatbot answering customer product questions"
 ```
