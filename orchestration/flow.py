@@ -27,7 +27,7 @@ from schemas.risk_profile import (
 from agents.onboarding_intake import OnboardingIntakeAgent
 from agents.risk_classifier import RiskClassifierAgent
 from agents.control_prescription import ControlPrescriptionAgent
-from agents.portfolio_manager import PortfolioManagerAgent
+from agents.portfolio_manager import PortfolioManagerAgent, get_low_confidence_frameworks
 from agents.audit_trail import AuditTrailAgent, AUDIT_LOG_DB
 
 # Define helper Pydantic models for input/output logging to guarantee model_dump_json() usage
@@ -143,9 +143,54 @@ class GlasswingGovernanceOrchestrator:
             )
             raise
 
-    def evaluate_new_initiative(self, initiative: Initiative) -> Tuple[GovernanceManifest, bool]:
+    def _transition_and_log(self, initiative_id, new_status: InitiativeStatus, transitioned_by: str, reason: str, risk_tier: Optional[str] = None):
+        """Calls PortfolioManagerAgent.update_status() and logs the
+        resulting StateTransition to the audit trail. Single choke point
+        for the intermediate transitions the pipeline drives (as opposed
+        to the final registration transition, which
+        register_initiative() logs itself since it also needs to persist
+        the manifest)."""
+        transition = self.portfolio_manager.update_status(
+            str(initiative_id), new_status, transitioned_by=transitioned_by, reason=reason, risk_tier=risk_tier
+        )
+        self.audit_trail.log_event(
+            agent_id=AgentID.PORTFOLIO_MANAGER,
+            action_type=ActionType.STATE_TRANSITIONED,
+            initiative_id=initiative_id,
+            input_hash=_get_sha256(f"{transition.previous_state.value}->{transition.new_state.value}"),
+            output_hash=_get_sha256(transition.model_dump_json()),
+            public_context=f"Transitioned initiative status to: {new_status.value}. {reason}"[:500]
+        )
+        return transition
+
+    def _run_verification_phase(self, initiative_id) -> bool:
+        """PHASE 5: Cryptographic Verification Check. Runs regardless of
+        whether the pipeline completed all the way to registration or
+        halted early (e.g. for human review) — the audit trail should
+        always be checked for tampering up to whatever point was reached."""
+        verify_result = self.audit_trail.verify_trail()
+        is_chain_valid = "CORRUPTION_DETECTED" not in verify_result
+
+        audit_input = AuditInput(verify_request="all_entries")
+        audit_output = AuditOutput(chain_integrity_verified=is_chain_valid, verify_result=verify_result)
+
+        self.audit_trail.log_event(
+            agent_id=AgentID.AUDIT_TRAIL,
+            action_type=ActionType.REPLAY_REQUESTED if not is_chain_valid else ActionType.REPORT_GENERATED,
+            initiative_id=initiative_id,
+            input_hash=_get_sha256(audit_input.model_dump_json()),
+            output_hash=_get_sha256(audit_output.model_dump_json()),
+            public_context=f"Audit chain verification complete: {'PASS' if is_chain_valid else 'FAIL'}"
+        )
+        return is_chain_valid
+
+    def evaluate_new_initiative(self, initiative: Initiative) -> Tuple[Optional[GovernanceManifest], bool]:
         """Runs the sequential multi-agent governance workflow for a given Initiative.
-        Returns the finalized GovernanceManifest and a boolean representing audit verification success.
+        Returns the finalized GovernanceManifest and a boolean representing audit
+        verification success. The manifest is None when the pipeline halts before
+        registration — currently only when Risk Classification comes back with
+        low confidence on any framework, which routes straight to
+        AWAITING_HUMAN_REVIEW without ever invoking Control Prescription.
         """
         initiative_id = initiative.initiative_id
 
@@ -190,6 +235,15 @@ class GlasswingGovernanceOrchestrator:
             public_context=f"Onboarded initiative: '{initiative.name}'"
         )
 
+        # Portfolio state now tracks the initiative from intake onward,
+        # rather than only appearing once the whole pipeline finishes.
+        self.portfolio_manager.create_initiative_record(initiative)
+        self._transition_and_log(
+            initiative_id, InitiativeStatus.CLASSIFICATION_PENDING,
+            transitioned_by="orchestrator",
+            reason="Onboarding intake completed and validated; entering risk classification."
+        )
+
         # --- PHASE 2: Risk Classification ---
         input_hash = _get_sha256(initiative.model_dump_json())
         risk_profile = self._run_phase(
@@ -209,6 +263,34 @@ class GlasswingGovernanceOrchestrator:
             input_hash=input_hash,
             output_hash=output_hash,
             public_context=f"Classified overall risk as: {risk_profile.overall_risk_tier.value}"
+        )
+
+        # Low-confidence gate: route straight to human review triage
+        # instead of silently proceeding into Control Prescription on a
+        # classification the Risk Classifier itself isn't confident in.
+        # Shares get_low_confidence_frameworks() with
+        # agents/portfolio_manager.py's _determine_initiative_status() so
+        # the two checks can't drift apart.
+        low_confidence_frameworks = get_low_confidence_frameworks(risk_profile)
+        if low_confidence_frameworks:
+            self._transition_and_log(
+                initiative_id, InitiativeStatus.AWAITING_HUMAN_REVIEW,
+                transitioned_by="orchestrator",
+                reason=(
+                    f"Classification confidence below threshold for: "
+                    f"{', '.join(low_confidence_frameworks)}. Routed to human review "
+                    f"before control prescription."
+                ),
+                risk_tier=risk_profile.overall_risk_tier.value,
+            )
+            is_chain_valid = self._run_verification_phase(initiative_id)
+            return None, is_chain_valid
+
+        self._transition_and_log(
+            initiative_id, InitiativeStatus.CONTROL_PRESCRIPTION_PENDING,
+            transitioned_by="orchestrator",
+            reason=f"Risk classified as {risk_profile.overall_risk_tier.value}; entering control prescription.",
+            risk_tier=risk_profile.overall_risk_tier.value,
         )
 
         # --- PHASE 3: Control Prescription ---
@@ -285,27 +367,11 @@ class GlasswingGovernanceOrchestrator:
         )
 
         # --- PHASE 5: Cryptographic Verification Check ---
-        verify_result = self.audit_trail.verify_trail()
-        is_chain_valid = "CORRUPTION_DETECTED" not in verify_result
-
-        audit_input = AuditInput(verify_request="all_entries")
-        audit_output = AuditOutput(chain_integrity_verified=is_chain_valid, verify_result=verify_result)
-
-        input_hash = _get_sha256(audit_input.model_dump_json())
-        output_hash = _get_sha256(audit_output.model_dump_json())
-
-        self.audit_trail.log_event(
-            agent_id=AgentID.AUDIT_TRAIL,
-            action_type=ActionType.REPLAY_REQUESTED if not is_chain_valid else ActionType.REPORT_GENERATED,
-            initiative_id=initiative_id,
-            input_hash=input_hash,
-            output_hash=output_hash,
-            public_context=f"Audit chain verification complete: {'PASS' if is_chain_valid else 'FAIL'}"
-        )
+        is_chain_valid = self._run_verification_phase(initiative_id)
 
         return manifest, is_chain_valid
 
-    async def evaluate_new_initiative_async(self, initiative: Initiative) -> Tuple[GovernanceManifest, bool]:
+    async def evaluate_new_initiative_async(self, initiative: Initiative) -> Tuple[Optional[GovernanceManifest], bool]:
         """Async wrapper for non-blocking use from Streamlit (or any other
         async caller). Runs the sync pipeline in a worker thread so the
         event loop isn't blocked. evaluate_new_initiative() remains the

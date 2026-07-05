@@ -366,37 +366,53 @@ with tab1:
                 # (evaluate_new_initiative() itself remains the sync path
                 # that tests call directly.)
                 manifest, verified = asyncio.run(orchestrator.evaluate_new_initiative_async(initiative_obj))
-                st.success("✅ Multi-Agent Intake & Governance Review Executed Successfully!")
-                
-                # Query generated structures for display
-                risk_profile = orchestrator.risk_classifier.classify_initiative(initiative_obj)
-                control_prescription = orchestrator.control_prescriber.prescribe_controls(risk_profile)
-                
-                # Render Report
-                st.markdown("<h3 class='sub-gradient-text'>Active Governance Report</h3>", unsafe_allow_html=True)
-                
-                r_col1, r_col2 = st.columns(2)
-                with r_col1:
-                    st.markdown("##### Framework Risk Classifications")
+
+                # manifest is None when the pipeline halted before Control
+                # Prescription ever ran (low classification confidence,
+                # routed straight to human review) -- do not fabricate a
+                # control-prescription report for a phase that never
+                # executed.
+                if manifest is None:
+                    risk_profile = orchestrator.risk_classifier.classify_initiative(initiative_obj)
+                    st.warning("⚠️ Routed to human review: classification confidence was below threshold. Control prescription was not run.")
+                    st.markdown("<h3 class='sub-gradient-text'>Risk Classification (Pending Human Review)</h3>", unsafe_allow_html=True)
                     st.write(f"- **Overall Assigned Tier**: `{risk_profile.overall_risk_tier.value.upper()}`")
                     st.write(f"- **EU AI Act Risk Level**: `{risk_profile.classifications.eu_ai_act.tier.value.upper()}`")
                     st.write(f"- **Colorado SB 205 Applicability**: `{risk_profile.classifications.colorado_sb_205.applicable}` (Category: `{risk_profile.classifications.colorado_sb_205.high_risk_category}`)")
-                    st.write(f"- **NIST RMF Manage Focus**: `{risk_profile.classifications.nist_ai_rmf.manage_attention.value.upper()}`")
-                    st.write(f"- **Human Oversight Required**: `{risk_profile.human_review_required}`")
                     if risk_profile.human_review_reasons:
                         st.markdown(f"<span style='color:#ef4444;'>*Reasons: {', '.join(risk_profile.human_review_reasons)}*</span>", unsafe_allow_html=True)
-                with r_col2:
-                    st.markdown("##### Prescribed Safeguards")
-                    if not control_prescription.controls.guardrails:
-                        st.info("No mandatory technical controls prescribed.")
-                    else:
-                        for g in control_prescription.controls.guardrails:
-                            st.write(f"**[{g.control_id}] {g.category.value.upper()}**")
-                            st.write(f"- *Framework*: `{', '.join([f.value for f in g.source_framework])}`")
-                            st.write(f"- *Instruction*: {g.description}")
-                
-                st.markdown("---")
-                st.info(f"**Immutable Manifest Hash Seal**: `{manifest.manifest_hash}` | Compliance Ledger: **{'VERIFIED' if verified else 'CORRUPT'}**")
+                else:
+                    st.success("✅ Multi-Agent Intake & Governance Review Executed Successfully!")
+
+                    # Query generated structures for display
+                    risk_profile = orchestrator.risk_classifier.classify_initiative(initiative_obj)
+                    control_prescription = orchestrator.control_prescriber.prescribe_controls(risk_profile)
+
+                    # Render Report
+                    st.markdown("<h3 class='sub-gradient-text'>Active Governance Report</h3>", unsafe_allow_html=True)
+
+                    r_col1, r_col2 = st.columns(2)
+                    with r_col1:
+                        st.markdown("##### Framework Risk Classifications")
+                        st.write(f"- **Overall Assigned Tier**: `{risk_profile.overall_risk_tier.value.upper()}`")
+                        st.write(f"- **EU AI Act Risk Level**: `{risk_profile.classifications.eu_ai_act.tier.value.upper()}`")
+                        st.write(f"- **Colorado SB 205 Applicability**: `{risk_profile.classifications.colorado_sb_205.applicable}` (Category: `{risk_profile.classifications.colorado_sb_205.high_risk_category}`)")
+                        st.write(f"- **NIST RMF Manage Focus**: `{risk_profile.classifications.nist_ai_rmf.manage_attention.value.upper()}`")
+                        st.write(f"- **Human Oversight Required**: `{risk_profile.human_review_required}`")
+                        if risk_profile.human_review_reasons:
+                            st.markdown(f"<span style='color:#ef4444;'>*Reasons: {', '.join(risk_profile.human_review_reasons)}*</span>", unsafe_allow_html=True)
+                    with r_col2:
+                        st.markdown("##### Prescribed Safeguards")
+                        if not control_prescription.controls.guardrails:
+                            st.info("No mandatory technical controls prescribed.")
+                        else:
+                            for g in control_prescription.controls.guardrails:
+                                st.write(f"**[{g.control_id}] {g.category.value.upper()}**")
+                                st.write(f"- *Framework*: `{', '.join([f.value for f in g.source_framework])}`")
+                                st.write(f"- *Instruction*: {g.description}")
+
+                    st.markdown("---")
+                    st.info(f"**Immutable Manifest Hash Seal**: `{manifest.manifest_hash}` | Compliance Ledger: **{'VERIFIED' if verified else 'CORRUPT'}**")
 
 with tab2:
     st.markdown("<h3 class='sub-gradient-text'>Active Inventory Directory</h3>", unsafe_allow_html=True)
