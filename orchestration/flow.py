@@ -294,7 +294,14 @@ class GlasswingGovernanceOrchestrator:
         )
 
         # --- PHASE 3: Control Prescription ---
-        input_hash = _get_sha256(risk_profile.model_dump_json())
+        # RiskProfile is never a caller-supplied input -- it's produced
+        # fresh, internally, on every run, with its own random
+        # risk_profile_id/created_at (default_factory). Hashing the full
+        # object here would make this input_hash unreproducible by any
+        # replay, even of the identical Initiative, since re-classifying
+        # always yields a new id/timestamp. _stable_hash() excludes those
+        # volatile fields, exactly as it already does for output hashes.
+        input_hash = _stable_hash(risk_profile)
         control_prescription = self._run_phase(
             phase_label="Control Prescription",
             agent_id=AgentID.CONTROL_PRESCRIPTION,
@@ -460,6 +467,79 @@ class GlasswingGovernanceOrchestrator:
     async def replay_initiative_async(self, initiative_id: uuid.UUID, initiative: Initiative) -> Dict[str, Any]:
         """Async wrapper for replay_initiative — see evaluate_new_initiative_async."""
         return await asyncio.to_thread(self.replay_initiative, initiative_id, initiative)
+
+    def replay_decision(self, audit_log_id: uuid.UUID, supplied_input: Any) -> Dict[str, Any]:
+        """Event-level replay — re-runs the single agent phase behind one
+        historical audit_log_id, rather than the whole pipeline
+        (replay_initiative() above replays an entire initiative's run).
+
+        The audit log stores only hashes, never raw content, so the caller
+        must supply the real input that produced this entry: an Initiative
+        for an onboarding_intake or risk_classifier entry, a RiskProfile
+        for a control_prescription entry. Given that, this:
+
+        1. Looks up the entry by audit_log_id and reads its recorded
+           agent_id, model_id, and prompt_manifest_sha directly off the
+           record — no reconstruction needed, they were logged verbatim.
+        2. Recomputes the input hash from the supplied object and checks
+           it against the historical input_hash, proving this is really a
+           replay of the same input.
+        3. Re-runs that specific agent and recomputes the output hash.
+        4. Reports whether the output hash matches. A mismatch is drift —
+           returned as `drift_detected: True`, never silently swallowed.
+        """
+        entry = next((e for e in AUDIT_LOG_DB if e["audit_log_id"] == audit_log_id), None)
+        if entry is None:
+            raise ValueError(f"Replay Halt: no audit log entry found for audit_log_id={audit_log_id}")
+
+        agent_id = entry["agent_id"]
+        action_type = entry["action_type"]
+        historical_input_hash = entry["input_hash"]
+        historical_output_hash = entry["output_hash"]
+
+        if agent_id == AgentID.ONBOARDING_INTAKE and action_type == ActionType.INTAKE_COMPLETED:
+            initiative = supplied_input
+            onboarding_input = OnboardingInput(
+                name=initiative.name,
+                description=initiative.description,
+                sponsor_business_unit=initiative.sponsor.business_unit,
+                sponsor_owner=initiative.sponsor.owner,
+            )
+            recomputed_input_hash = _get_sha256(onboarding_input.model_dump_json())
+            recomputed_output_hash = _stable_hash(initiative)
+
+        elif agent_id == AgentID.RISK_CLASSIFIER and action_type == ActionType.CLASSIFICATION_COMPLETED:
+            initiative = supplied_input
+            recomputed_input_hash = _get_sha256(initiative.model_dump_json())
+            recomputed_output_hash = _stable_hash(self.risk_classifier.classify_initiative(initiative))
+
+        elif agent_id == AgentID.CONTROL_PRESCRIPTION and action_type == ActionType.PRESCRIPTION_COMPLETED:
+            risk_profile = supplied_input
+            recomputed_input_hash = _stable_hash(risk_profile)
+            recomputed_output_hash = _stable_hash(self.control_prescriber.prescribe_controls(risk_profile))
+
+        else:
+            raise ValueError(
+                f"Replay Halt: replay_decision() doesn't know how to replay "
+                f"agent={agent_id.value}, action={action_type.value} yet."
+            )
+
+        input_hash_matches = recomputed_input_hash == historical_input_hash
+        output_hash_matches = recomputed_output_hash == historical_output_hash
+
+        return {
+            "audit_log_id": str(audit_log_id),
+            "agent_id": agent_id.value,
+            "action_type": action_type.value,
+            "model_id": entry["model_id"],
+            "prompt_manifest_sha": entry["prompt_manifest_sha"],
+            "input_hash_matches": input_hash_matches,
+            "historical_output_hash": historical_output_hash,
+            "recomputed_output_hash": recomputed_output_hash,
+            "output_hash_matches": output_hash_matches,
+            "drift_detected": not output_hash_matches,
+            "replay_verified": input_hash_matches and output_hash_matches,
+        }
 
 if __name__ == "__main__":
     from datetime import date

@@ -7,6 +7,7 @@ Tools: Exposes hash-chain verification tool.
 """
 
 import os
+import re
 import hashlib
 import json
 from pathlib import Path
@@ -24,7 +25,7 @@ def verify_audit_log_chain() -> str:
         entry_data = entry.copy()
         # Exclude chain_hash to verify
         chain_hash = entry_data.pop("chain_hash")
-        
+
         # Calculate expected hash
         serialized = json.dumps(entry_data, default=str, sort_keys=True)
         if previous_hash:
@@ -32,12 +33,36 @@ def verify_audit_log_chain() -> str:
         else:
             payload = serialized
         expected = hashlib.sha256(payload.encode("utf-8")).hexdigest()
-        
+
         if expected != chain_hash:
             return f"CORRUPTION_DETECTED: Entry index {idx} (ID: {entry.get('audit_log_id')}) failed hash matching. Expected: {expected}, Found: {chain_hash}"
-            
+
         previous_hash = chain_hash
     return "SUCCESS: Audit trail hash chain verified. Zero tampering detected."
+
+
+def verify_chain_integrity() -> Dict[str, Any]:
+    """Structured wrapper around verify_audit_log_chain() for callers that
+    need a programmatic pass/fail plus the specific tampering point,
+    rather than a human-readable string. Delegates entirely to
+    verify_audit_log_chain() -- no hash-recomputation logic is duplicated
+    here, so the two can never drift apart."""
+    result_str = verify_audit_log_chain()
+    if result_str.startswith("SUCCESS"):
+        return {
+            "valid": True,
+            "message": result_str,
+            "corrupted_entry_index": None,
+            "corrupted_audit_log_id": None,
+        }
+
+    match = re.search(r"Entry index (\d+) \(ID: ([^)]+)\)", result_str)
+    return {
+        "valid": False,
+        "message": result_str,
+        "corrupted_entry_index": int(match.group(1)) if match else None,
+        "corrupted_audit_log_id": match.group(2) if match else None,
+    }
 
 
 class AuditTrailAgent:
