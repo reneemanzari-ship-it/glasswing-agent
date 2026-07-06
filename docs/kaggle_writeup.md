@@ -26,7 +26,7 @@ Three security features run end to end: schema validation that routes to human r
 
 The system is organized into three planes (see the architecture diagram in the README) because classification accuracy depends on keeping intake, compliance logic, and persistence from bleeding into each other.
 
-Plane 1, Intake: the Onboarding Intake Agent structures a raw initiative description into a validated Initiative object and screens it for adversarial input before anything downstream sees it.
+Plane 1, Intake: The Onboarding Intake Agent captures an AI initiative into a structured record for governance review. This proof-of-concept takes submissions as freeform descriptions. A production version would pull from model cards, model registries, and standardized intake questionnaires. The agent runs the first adversarial defense layer, refusing prompt injection attempts before they reach downstream classification.
 
 Plane 2, Risk and Compliance: the Risk Classifier Agent queries the MCP server's framework tools and produces a RiskProfile with a tier, citations, and a confidence score for each of the three frameworks. The Control Prescription Agent takes that RiskProfile and generates the controls it implies: guardrails, human-in-the-loop checkpoints, monitoring, audit retention, regulatory submissions.
 
@@ -87,3 +87,5 @@ A2A protocol integration is the most obvious next step: wrapping the Agent Skill
 Two more frameworks are already anticipated in the schema but not implemented: NYC Local Law 144 (automated employment decision tools) and ISO 42001 (AI management systems). Adding either is the same pattern as any other framework: a JSON file in `mcp_server/frameworks/` and matching logic in the classifier.
 
 Runtime monitoring is the gap I'd fix next for production. Glasswing governs the decision to build and deploy, but nothing watches the model afterward for drift against the risk profile it was approved under. That, plus a real GRC platform integration instead of a standalone SQLite portfolio, is what turns this from a governance gate into a governance system.
+
+A full AI Governance Employee replacement would extend intake beyond freeform submissions to pull from model cards, third-party risk assessments, and model registries directly. Portfolio Manager would extend into runtime observability, monitoring deployed models for drift, bias, latency, and confidence degradation against the risk profile they were approved under. The current architecture handles the workflow layer between AI builders, compliance, legal, risk, and executives. What it does not yet do is watch the models after deployment. That is the largest gap between what a full governance employee handles and what Glasswing handles today.
