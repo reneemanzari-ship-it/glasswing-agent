@@ -4,7 +4,9 @@ Glasswing is a five-agent AI governance system that takes a proposed AI initiati
 
 ## The Problem
 
-**2:47 AM.** A fully autonomous consumer-lending model — no human in the loop, no confidence floor, no audit trail beyond a debug log — approves a loan. Nobody in Legal, Risk, or Compliance is awake to see it happen. By the time anyone reviews the decision, it's already been made, the applicant has already been notified, and the only question left is whether the company can prove *why* it happened.
+Enterprises are deploying AI faster than they can govern it. A mid-market company might have a dozen or more AI initiatives in flight across marketing, HR, customer service, credit, and fraud — each described in a different Slack channel or pitch deck, with nobody owning the question of which risk tier any of them falls into, what controls it needs, or what a regulator would ask about it.
+
+**2:47 AM** is what that gap looks like when it actually breaks: a fully autonomous consumer-lending model — no human in the loop, no confidence floor, no audit trail beyond a debug log — approves a loan. Nobody in Legal, Risk, or Compliance is awake to see it happen. By the time anyone reviews the decision, it's already been made, the applicant has already been notified, and the only question left is whether the company can prove *why* it happened. The failure isn't that one model made one bad call — it's that nothing was watching the portfolio, prescribing controls, or maintaining an audit trail a regulator could replay.
 
 This is not a hypothetical. It's the default failure mode for any large, regulated enterprise — a payments company, a bank, a consumer lender operating at Paysafe-scale across multiple jurisdictions — that ships AI faster than it can govern it:
 
@@ -16,7 +18,7 @@ Glasswing exists to close that gap: turn "governance" from a quarterly audit int
 
 ## The Solution
 
-Glasswing is a **five-agent governance pipeline organized into three planes**, backed by a **custom Model Context Protocol (MCP) server** that serves the regulatory taxonomies as structured, queryable tools rather than static documents.
+Glasswing is a governance operating system for companies deploying AI at scale: it catches initiatives at intake, classifies their risk against regulatory frameworks, prescribes the controls each risk tier requires, tracks the whole portfolio in a queryable state, and logs every decision to a tamper-evident audit chain. Under the hood, that's a **five-agent governance pipeline organized into three planes**, backed by a **custom Model Context Protocol (MCP) server** that serves the regulatory taxonomies as structured, queryable tools rather than static documents.
 
 1. **Plane 1 — Intake.** The **Onboarding Intake Agent** structures a freeform AI initiative description into a validated `Initiative` record, and is the first line of defense against adversarial/prompt-injection submissions.
 2. **Plane 2 — Risk and Compliance.** The **Risk Classifier Agent** queries the MCP server's framework tools and produces a multi-framework `RiskProfile` (EU AI Act tier, NIST AI RMF attention levels, Colorado SB 205 applicability) with citations and confidence scores. The **Control Prescription Agent** turns that risk profile into concrete, implementable controls — guardrails, human-in-the-loop checkpoints, monitoring, audit retention, regulatory submissions.

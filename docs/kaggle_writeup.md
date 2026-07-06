@@ -1,10 +1,10 @@
 # Glasswing: The AI Governance Officer Agent That Prevents the 2:47am Incident
 
-An operating system for AI governance. Every company is deploying AI. Very few have a repeatable governance process. Five agents classify, control, and audit every initiative before it ships.
+An operating system for AI governance. Every company is deploying AI. Very few have a repeatable governance process.
 
 ## Problem statement
 
-At 2:47am, a fully autonomous credit underwriting model approves a consumer loan. No human reviewed it. No one flagged that this exact system profile (full autonomy, no human-in-the-loop, financial and PII data, EU and Colorado jurisdictions) is exactly what the EU AI Act calls high-risk and what Colorado SB 205 calls a consequential decision. By the time anyone in Legal or Risk sees this, the loan is already funded and the audit trail is a debug log nobody trusts.
+Enterprises are deploying AI faster than they can govern it. A mid-market company might have twenty AI initiatives in flight across marketing, HR, customer service, credit, and fraud. Each sits in a different Slack channel or pitch deck. Nobody owns the question of which risk tier each falls into, what controls each needs, or what regulators would ask about them. When something goes wrong, like an autonomous credit model approving a loan at 2:47am with no human review, the problem is not that this one scenario failed. The company had no governance operating system to catch it in the first place. Nothing was watching the portfolio, nothing was prescribing controls, nothing was maintaining an audit trail a regulator could replay.
 
 This happens because four failures compound. Intake is noisy: initiatives get described in Slack messages and pitch decks, not structured data a compliance system can act on. There's no risk-tier enforcement: nothing stops a model from shipping regardless of what tier it falls into. There's no control prescription: even when a system gets flagged as high-risk, nobody automatically generates the specific controls it needs, like human-in-the-loop thresholds, monitoring cadence, or audit retention. And there's no audit trail: when a regulator asks how a decision was made, there's no cryptographically verifiable record, just whatever logs happened to survive.
 
@@ -13,6 +13,8 @@ This isn't speculative. Enterprises are creating AI Delivery Lead and Chief AI O
 ## Solution overview
 
 Glasswing is a three-plane pipeline. Plane one handles intake: an Onboarding Intake Agent turns a freeform initiative description into a validated structured record, and is also the first checkpoint against prompt injection. Plane two handles risk and compliance: a Risk Classifier Agent queries a custom MCP server for the EU AI Act, NIST AI RMF, and Colorado SB 205, and a Control Prescription Agent turns that classification into specific, implementable controls. Plane three handles portfolio and audit: a Portfolio Manager Agent tracks every initiative's lifecycle state in a queryable database, and an Audit Trail Agent writes every action any agent takes into a hash-chained, tamper-evident log.
+
+What Glasswing is, in one sentence: a governance operating system that catches initiatives at intake, classifies their risk against regulatory frameworks, prescribes the controls each risk tier requires, tracks the whole portfolio in a queryable state, and logs every decision to a tamper-evident audit chain. Companies deploying AI at scale get portfolio visibility, risk visibility, and a governance workflow that runs between AI builders, compliance, legal, risk, and executives instead of falling between them.
 
 The MCP server is the part I'd point to first if someone asked what's actually novel here. Instead of hardcoding "if EU and financial, then high-risk" logic into the classifier, the three frameworks live as structured JSON, and the Risk Classifier queries them at runtime through four MCP tools. Adding a fourth framework means adding a JSON file and wiring it into the query logic, not rewriting the classifier.
 
@@ -56,7 +58,7 @@ The Risk Classifier's rule engine is also packaged as a standalone Agent Skill i
 
 Schema validation is not a formality here. Every agent handoff is re-validated against its Pydantic schema, and if validation fails, the pipeline doesn't crash or silently continue. It logs a `HUMAN_REVIEW_REQUESTED` event to the audit trail and routes the initiative to human review. The audit log itself is hash-chained: every entry's `chain_hash` incorporates the SHA-256 hash of the previous entry, so altering any historical entry breaks verification from that point forward, and any single agent phase can be replayed against its recorded input to confirm the output hash still matches. Adversarial input detection runs before any of that. A canonical detector checks intake text for prompt injection patterns like "ignore previous instructions," and if it matches, the Onboarding Intake Agent refuses the submission outright and the orchestrator enforces the same check again, independently, if a flagged initiative ever reaches it directly. Two layers catching the same thing sounds redundant until you remember the point of defense in depth: the second layer doesn't depend on the first one working correctly.
 
-## The 2:47am loan demo
+## How Glasswing handles a high-risk initiative
 
 Submit the LendFast Autonomous Underwriter initiative: fully autonomous, no human-in-the-loop planned, financial and PII data, US-CO and EU jurisdictions, deployed today. Here's what actually happens, not the abstract shape of it.
 
