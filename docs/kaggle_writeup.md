@@ -1,4 +1,4 @@
-# Glasswing: The AI Governance Officer Agent That Prevents the 2:47am Incident
+# Glasswing: A Governance Operating System for Companies Deploying AI at Scale
 
 An operating system for AI governance. Every company is deploying AI. Very few have a repeatable governance process.
 
