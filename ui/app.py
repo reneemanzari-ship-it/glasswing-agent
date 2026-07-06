@@ -211,7 +211,7 @@ def render_step_card(step: dict):
 def load_scenario(scenario_type: str):
     if scenario_type == "loan":
         st.session_state["form_name"] = "LendFast Autonomous Underwriter"
-        st.session_state["form_desc"] = "Autonomous credit evaluation and underwriting system that approves consumer loans without human review at 2:47 AM."
+        st.session_state["form_desc"] = "Autonomous credit evaluation and underwriting system that approves consumer loans without human review."
         st.session_state["form_bu"] = "Retail Lending Division"
         st.session_state["form_owner"] = "Alex Credit-Lead"
         st.session_state["form_type"] = AISystemType.CLASSICAL_ML
