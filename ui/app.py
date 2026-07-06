@@ -211,7 +211,7 @@ def render_step_card(step: dict):
 def load_scenario(scenario_type: str):
     if scenario_type == "loan":
         st.session_state["form_name"] = "LendFast Autonomous Underwriter"
-        st.session_state["form_desc"] = "Autonomous credit evaluation and underwriting system that approves consumer loans without human review."
+        st.session_state["form_desc"] = "Fully autonomous consumer credit underwriting system with no human review. Approves loans directly against credit bureau data."
         st.session_state["form_bu"] = "Retail Lending Division"
         st.session_state["form_owner"] = "Alex Credit-Lead"
         st.session_state["form_type"] = AISystemType.CLASSICAL_ML
@@ -295,7 +295,7 @@ if st.sidebar.button("Reset Governance Database"):
 
 # --- MAIN DASHBOARD HEADER ---
 st.markdown("<h1 class='gradient-text'>GLASSWING AI GOVERNANCE</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color:#94a3b8; font-size:1.1rem;'>Autonomous Multi-Agent Guard Plane & Compliance Ledger</p>", unsafe_allow_html=True)
+st.markdown("<p style='color:#94a3b8; font-size:1.1rem;'>A governance operating system for companies deploying AI at scale</p>", unsafe_allow_html=True)
 
 # Fetch stats
 p_state = orchestrator.portfolio_manager.get_portfolio_state()
@@ -318,20 +318,23 @@ with m_col4:
 tab1, tab2, tab3 = st.tabs(["Initiative Intake Portal", "Portfolio Directory", "Cryptographic Audit Ledger"])
 
 with tab1:
-    st.markdown("<h3 class='sub-gradient-text'>Load Pre-configured Scenario</h3>", unsafe_allow_html=True)
-    sc_col1, sc_col2, sc_col3 = st.columns(3)
+    st.markdown("<h3 class='sub-gradient-text'>Sample AI Systems for Governance Review</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#94a3b8;'>Load a sample AI initiative to see Glasswing classify risk and prescribe controls.</p>", unsafe_allow_html=True)
+    sc_col1, sc_col2 = st.columns(2)
     with sc_col1:
-        if st.button("Load 2:47am Loan"):
+        if st.button("Load Consumer Credit AI"):
             load_scenario("loan")
             st.rerun()
     with sc_col2:
         if st.button("Load Marketing Content Gen"):
             load_scenario("marketing")
             st.rerun()
-    with sc_col3:
-        if st.button("Load Injection Attempt"):
-            load_scenario("injection")
-            st.rerun()
+
+    st.markdown("<h3 class='sub-gradient-text'>Security Test</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#94a3b8;'>Test the adversarial defense layer with a prompt injection attempt.</p>", unsafe_allow_html=True)
+    if st.button("Load Injection Attempt"):
+        load_scenario("injection")
+        st.rerun()
 
     st.markdown("<h3 class='sub-gradient-text'>Structured Intake Form</h3>", unsafe_allow_html=True)
     
