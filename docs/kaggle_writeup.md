@@ -1,6 +1,6 @@
 # Glasswing: A Governance Operating System for Companies Deploying AI at Scale
 
-An operating system for AI governance. Every company is deploying AI. Very few have a repeatable governance process.
+Every company is deploying AI. Very few have a repeatable governance process.
 
 ## Problem statement
 
@@ -12,7 +12,7 @@ This isn't speculative. Enterprises are creating AI Delivery Lead and Chief AI O
 
 ## Solution overview
 
-Glasswing is a three-plane pipeline. Plane one handles intake: an Onboarding Intake Agent turns a freeform initiative description into a validated structured record, and is also the first checkpoint against prompt injection. Plane two handles risk and compliance: a Risk Classifier Agent queries a custom MCP server for the EU AI Act, NIST AI RMF, and Colorado SB 205, and a Control Prescription Agent turns that classification into specific, implementable controls. Plane three handles portfolio and audit: a Portfolio Manager Agent tracks every initiative's lifecycle state in a queryable database, and an Audit Trail Agent writes every action any agent takes into a hash-chained, tamper-evident log.
+Glasswing is a governance operating system for companies deploying AI at scale. Plane one handles intake: an Onboarding Intake Agent turns a freeform initiative description into a validated structured record, and is also the first checkpoint against prompt injection. Plane two handles risk and compliance: a Risk Classifier Agent queries a custom MCP server for the EU AI Act, NIST AI RMF, and Colorado SB 205, and a Control Prescription Agent turns that classification into specific, implementable controls. Plane three handles portfolio and audit: a Portfolio Manager Agent tracks every initiative's lifecycle state in a queryable database, and an Audit Trail Agent writes every action any agent takes into a hash-chained, tamper-evident log.
 
 What Glasswing is, in one sentence: a governance operating system that catches initiatives at intake, classifies their risk against regulatory frameworks, prescribes the controls each risk tier requires, tracks the whole portfolio in a queryable state, and logs every decision to a tamper-evident audit chain. Companies deploying AI at scale get portfolio visibility, risk visibility, and a governance workflow that runs between AI builders, compliance, legal, risk, and executives instead of falling between them.
 
@@ -30,7 +30,7 @@ Plane 1, Intake: The Onboarding Intake Agent captures an AI initiative into a st
 
 Plane 2, Risk and Compliance: the Risk Classifier Agent queries the MCP server's framework tools and produces a RiskProfile with a tier, citations, and a confidence score for each of the three frameworks. The Control Prescription Agent takes that RiskProfile and generates the controls it implies: guardrails, human-in-the-loop checkpoints, monitoring, audit retention, regulatory submissions.
 
-Plane 3, Portfolio and Audit: the Portfolio Manager Agent commits the initiative's state to a queryable SQLite portfolio and decides what status it lands in. The Audit Trail Agent logs every action from every other agent into a SHA-256 hash chain.
+Plane 3, Portfolio and Audit: the Portfolio Manager Agent maintains portfolio-wide risk visibility, tracks every initiative's lifecycle state in a queryable SQLite portfolio, and decides what status each one lands in. The Audit Trail Agent logs every action from every other agent into a SHA-256 hash chain.
 
 Data flows one direction through the planes: Initiative to RiskProfile to ControlPrescription to GovernanceManifest, with every agent also writing to the audit trail as it goes.
 
