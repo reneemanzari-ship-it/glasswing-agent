@@ -92,9 +92,18 @@ Why: Blocking Week 1 delivery on interpreter provisioning isn't the
 conservative choice when the code itself doesn't depend on anything
 3.11-specific. Flagging so a 3.11 run happens before this is trusted as
 CI's actual runtime.
-Status: OPEN for Renee review — recommend pinning CI to 3.11 explicitly
-(the workflow in .github/workflows/ci.yml does specify 3.11) and running
-this locally against a real 3.11 interpreter at least once before Week 2.
+
+Update — 2026-07-09: Ratified by Renee. Python 3.14 is now the project's
+target version, not a logged deviation. GLASSWING_SPEC.md section 2.1's
+runtime stack table and Appendix A's CLAUDE.md seed block, the live
+CLAUDE.md, pyproject.toml (`requires-python`, `[tool.ruff] target-version`,
+`[tool.mypy] python_version`), and .github/workflows/ci.yml's
+`setup-python` step all now say 3.14 explicitly. Re-ran the full offline
+suite (`GLASSWING_OFFLINE=1 pytest tests/glasswing`), `ruff check`, and
+`mypy --strict glasswing/` against 3.14 after the edits — all still pass
+(see PR follow-up report). No 3.11 interpreter run is needed going
+forward, since 3.11 is no longer the target.
+Status: RESOLVED — no longer open.
 
 ## D-006 — 2026-07-08 — What does the ported stable-hash rule apply to, given there's no GovernanceManifest table in the new schema?
 

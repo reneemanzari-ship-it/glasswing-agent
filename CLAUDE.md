@@ -21,7 +21,7 @@ Tests enforce these. Do not weaken the tests. If a task appears to require viola
 
 ## Conventions
 
-- Python 3.11, Pydantic v2, SQLAlchemy 2.x, Alembic, Typer, structlog, FastMCP.
+- Python 3.14, Pydantic v2, SQLAlchemy 2.x, Alembic, Typer, structlog, FastMCP.
 - `mypy --strict` clean on `glasswing/`. `ruff check` clean. No `# type: ignore` without a DECISIONS.md entry explaining why.
 - Tests run offline: `GLASSWING_OFFLINE=1`, pytest-socket active. Any test that needs the network is wrong; fix the test, not the flag.
 - Live LLM runs are manual only, operator-initiated, and logged in `docs/live_runs.md` with date, purpose, prompt version, model ID, and approximate token count.

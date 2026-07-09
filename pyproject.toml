@@ -3,7 +3,7 @@ name = "glasswing"
 version = "0.1.0"
 description = "A single-operator AI governance system for automated compliance, risk classification, and monitoring"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
     # v0.1 agents (still live until retired per GLASSWING_SPEC.md section 5)
     "google-adk>=2.3.0",
@@ -44,14 +44,14 @@ packages = ["glasswing", "agents", "schemas", "orchestration", "mcp_server", "se
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py314"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "B"]
 ignore = []
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.14"
 strict = true
 packages = ["glasswing"]
 

@@ -179,6 +179,14 @@ def transition(
 
     _check_preconditions(session, initiative, new_state)
 
+    # --- INVARIANT-CRITICAL (CLAUDE.md #3: "no entry, no mutation") ---
+    # audit.append_entry() and the lifecycle_state assignment below must
+    # stay in this order, in this same still-open `session`, with no
+    # session.commit() between them. Neither call commits anything itself
+    # (append_entry only adds+flushes); the caller's single commit (or
+    # session_scope's rollback-on-exception) is what makes both durable —
+    # or both vanish — together. Do not split these across two
+    # transactions, and do not let a caller commit in between.
     audit.append_entry(
         session,
         engagement_id=initiative.engagement_id,
@@ -193,4 +201,5 @@ def transition(
     )
     initiative.lifecycle_state = new_state.value
     session.flush()
+    # --- end invariant-critical block ---
     return initiative

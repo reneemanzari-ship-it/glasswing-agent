@@ -86,6 +86,44 @@ def test_initiative_creation_writes_an_audit_entry(session):
     assert initiative.lifecycle_state == LifecycleState.DRAFT.value
 
 
+def test_transition_audit_entry_and_mutation_roll_back_together(session):
+    """CLAUDE.md invariant #3: the audit entry and the state mutation are
+    one transaction, not two independent commits. transition() itself
+    never calls session.commit() -- only the caller does. If the
+    transaction never reaches that commit (simulating a failure anywhere
+    between transition() returning and the caller's commit) neither
+    write should survive: proving they were never separately durable."""
+    engagement = _make_engagement(session)
+    initiative = _make_initiative(session, engagement)
+    session.commit()
+
+    entries_before = (
+        session.query(AuditEntryRow).filter_by(engagement_id=engagement.id).count()
+    )
+
+    portfolio.transition(
+        session,
+        initiative=initiative,
+        new_state=LifecycleState.EVIDENCE_COMPLETE,
+        actor="tester",
+        reason="Uncommitted transition for the atomicity test.",
+    )
+    # Not committed yet -- simulates a failure between transition()
+    # returning and the caller's commit.
+    session.rollback()
+
+    entries_after = (
+        session.query(AuditEntryRow).filter_by(engagement_id=engagement.id).count()
+    )
+    assert entries_after == entries_before, "rolled-back audit entry must not survive"
+
+    session.refresh(initiative)
+    assert (
+        initiative.lifecycle_state == LifecycleState.DRAFT.value
+    ), "rolled-back state mutation must not survive"
+    assert audit.verify_chain(session, engagement.id).valid
+
+
 def test_every_transition_writes_a_matching_audit_entry(session):
     engagement = _make_engagement(session)
     initiative = _make_initiative(session, engagement)

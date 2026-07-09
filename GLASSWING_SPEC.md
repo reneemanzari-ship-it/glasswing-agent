@@ -46,7 +46,7 @@ Modularity constraint honored throughout: framework datasets, the classification
 
 2.1 Runtime stack decisions
 Concern | Decision | Why
-Language / typing | Python 3.11, Pydantic v2, mypy strict on glasswing/ | Continuity with v0.1; Sonnet productivity
+Language / typing | Python 3.14, Pydantic v2, mypy strict on glasswing/ | Continuity with v0.1; Sonnet productivity; ratified from 3.11 to 3.14 by owner decision (DECISIONS.md D-005)
 Agent runtime | Claude Agent SDK (Python), replacing Google ADK + LiteLLM | Anthropic-native stack, MCP as integration spine, matches the builder model and the partner ecosystem. Wrap the SDK behind glasswing/agents/base.py so agent code depends on our interface, not the SDK's; the SDK is young and its API will move.
 Model | Claude Sonnet (current release) for extraction and narrative | Cost and adequacy. Model ID is config, never hardcoded.
 Storage | SQLite via SQLAlchemy 2.x + Alembic migrations | Single operator, zero ops. Alembic from day one because the schema will change every phase. Postgres migration is a year-two problem the ORM keeps cheap.
@@ -266,7 +266,7 @@ Invariants (tests enforce these; do not weaken the tests):
 - Every artifact records engine/framework/prompt/model versions.
 - Collector scope is fixed: PSI drift, confidence stats, latency percentiles.
 Conventions:
-- Python 3.11, Pydantic v2, SQLAlchemy 2.x, Alembic, Typer, structlog.
+- Python 3.14, Pydantic v2, SQLAlchemy 2.x, Alembic, Typer, structlog.
 - mypy strict on glasswing/, ruff clean, pytest offline (GLASSWING_OFFLINE=1,
   pytest-socket). Live LLM runs are manual only, logged in docs/live_runs.md.
 - Ambiguity: choose conservatively, log in DECISIONS.md, continue.
