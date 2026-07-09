@@ -18,6 +18,7 @@ from schemas.initiative import Initiative
 from schemas.risk_profile import EUAIActTier
 from skills.ai_risk_tier_classification.scripts.classifier import AIRiskTierClassificationSkill
 from agents.risk_classifier import RiskClassifierAgent
+from glasswing.engines.classification import classify_initiative
 
 REPO_ROOT = Path(__file__).parent.parent
 EXAMPLES_DIR = REPO_ROOT / "skills" / "ai_risk_tier_classification" / "examples"
@@ -139,3 +140,26 @@ def test_skill_output_matches_full_agent_output(filename):
     assert skill_profile.classifications.colorado_sb_205.high_risk_category == agent_profile.classifications.colorado_sb_205.high_risk_category
     assert skill_profile.overall_risk_tier == agent_profile.overall_risk_tier
     assert skill_profile.human_review_required == agent_profile.human_review_required
+
+
+@pytest.mark.parametrize("filename", EXAMPLE_FILES)
+def test_skill_matches_canonical_engine(filename):
+    """Direction inverted Week 2 (GLASSWING_SPEC.md section 5, disposition
+    table item 10): the classification logic's canonical home is now
+    glasswing/engines/classification.py, not this skill. Previously this
+    test module only checked the skill against the full agent (both of
+    which happened to share the same code); this asserts directly against
+    glasswing.engines.classification.classify_initiative(), proving the
+    skill is a thin re-export of the engine and not a second copy of the
+    rules that could quietly drift from it."""
+    example = _load_example(filename)
+    initiative = Initiative(**example["input_initiative"])
+
+    skill_profile = AIRiskTierClassificationSkill().classify(initiative)
+    engine_profile = classify_initiative(initiative)
+
+    assert skill_profile.classifications == engine_profile.classifications
+    assert skill_profile.overall_risk_tier == engine_profile.overall_risk_tier
+    assert skill_profile.human_review_required == engine_profile.human_review_required
+    assert skill_profile.human_review_reasons == engine_profile.human_review_reasons
+    assert skill_profile.regulatory_exposure_summary == engine_profile.regulatory_exposure_summary

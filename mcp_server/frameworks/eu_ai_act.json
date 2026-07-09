@@ -4,6 +4,12 @@
   "description": "EU regulation classifying AI systems by risk level. Full enforcement: August 2, 2026.",
   "source_url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
   "version": "2024-06-13",
+  "framework_version": "2024.06",
+  "content_date": "2024-06-13",
+  "effective_from": "2026-08-02",
+  "effective_to": null,
+  "status": "amended",
+  "verification_note": "Regulation (EU) 2024/1689 is in force; the tier/category content below (Annex III sectoral categories, Article 5 prohibited practices, Article 50 transparency) is unaffected by the timeline change described here -- only the high-risk compliance deadline shifted. Article 5 prohibited-practice obligations (effective 2025-02-02) and GPAI obligations (effective 2025-08-02) are unaffected. The Annex III high-risk compliance deadline, originally 2026-08-02, was deferred approximately 16 months to 2027-12-02 for stand-alone Annex III systems (Annex I embedded-product AI deferred to 2028-08-02) under a Digital Omnibus trilogue agreement reached 2026-05-07. NEEDS_OWNER_REVIEW: that agreement was still provisional and pending formal co-legislator adoption as of the sources below -- confirm final adoption status before this dataset backs a live engagement close to either the original or revised deadline. Verified via web search 2026-07-09. Sources: Gibson Dunn, 'EU AI Act Omnibus Agreement -- Postponed High-Risk Deadlines and Other Key Changes' (https://www.gibsondunn.com/eu-ai-act-omnibus-agreement-postponed-high-risk-deadlines-and-other-key-changes/); Morgan Lewis, 'EU Approves Delays and Other Amendments to Certain EU AI Act Obligations' (2026-06) (https://www.morganlewis.com/pubs/2026/06/eu-approves-delays-and-other-amendments-to-certain-eu-ai-act-obligations-what-businesses-should-know); EU AI Act Service Desk implementation timeline (https://ai-act-service-desk.ec.europa.eu/en/ai-act/timeline/timeline-implementation-eu-ai-act).",
   "tiers": {
     "prohibited": {
       "name": "Prohibited Practices (Article 5)",

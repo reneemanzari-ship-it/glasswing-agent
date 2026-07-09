@@ -1,0 +1,47 @@
+{
+  "framework_id": "nyc_ll144",
+  "name": "NYC Local Law 144 (Automated Employment Decision Tools)",
+  "description": "New York City law requiring an independent bias audit, public disclosure of audit results, and candidate notice for automated employment decision tools (AEDTs) used to substantially assist or replace discretionary decisions in hiring or promotion for New York City-based candidates or employees.",
+  "source_url": "https://www.nyc.gov/site/dca/about/automated-employment-decision-tools.page",
+  "version": "Effective January 1, 2023",
+  "framework_version": "1.0-ll144",
+  "content_date": "2021-12-11",
+  "effective_from": "2023-01-01",
+  "effective_to": null,
+  "status": "enacted",
+  "verification_note": "Verified via web search 2026-07-09. Local Law 144 was enacted 2021-12-11 and took effect 2023-01-01, with active enforcement beginning 2023-07-05. As of 2026, a December 2025 New York State Comptroller audit found weak DCWP oversight, prompting a stricter 2026 enforcement phase (more frequent investigations, higher cumulative penalties) -- this is an enforcement-posture change, not a change to the substantive requirements modeled below. Core requirements (independent annual bias audit, public posting of audit results, >=10 business days' candidate notice) and the bias-audit content (testing for disparate impact by sex, ethnicity, and race; auditor independence from both deployer and vendor) are confirmed by multiple current sources. NEEDS_OWNER_REVIEW: the precise statutory definition of 'substantially assist or replace discretionary decision-making', the exact carve-outs, and the specific NYC Admin Code section numbers below are synthesized from secondary compliance-guidance sources, not the primary NYC Admin Code text -- verify against the primary source before this dataset backs a client deliverable. Sources: NYC DCWP, Automated Employment Decision Tools (https://www.nyc.gov/site/dca/about/automated-employment-decision-tools.page); Deloitte, 'NYC Local Law 144-21 and Algorithmic Bias' (https://www.deloitte.com/us/en/services/audit-assurance/articles/nyc-local-law-144-algorithmic-bias.html); NY State Comptroller, 'Enforcement of Local Law 144 - Automated Employment Decision Tools' (2025-12-02) (https://www.osc.ny.gov/state-agencies/audits/2025/12/02/enforcement-local-law-144-automated-employment-decision-tools).",
+  "tiers": {
+    "applicable_aedt": {
+      "name": "Automated Employment Decision Tool Subject to LL144",
+      "needs_owner_review": true,
+      "criteria": {
+        "summary": "A computational process (including one derived from AI, machine learning, statistical modeling, or similar techniques) used to substantially assist or replace discretionary decision-making in hiring or promotion, for a candidate or employee who would work in New York City.",
+        "examples": [
+          "Resume screening or ranking tools that score or rank NYC-based candidates",
+          "Automated interview scoring or video-analysis tools used in NYC hiring",
+          "Candidate-matching or job-recommendation tools that substantially assist a NYC hiring or promotion decision"
+        ]
+      },
+      "citations": ["NYC Admin. Code § 20-870 et seq. (Local Law 144)"],
+      "required_controls": [
+        "INDEPENDENT_ANNUAL_BIAS_AUDIT",
+        "PUBLIC_POSTING_OF_BIAS_AUDIT_SUMMARY",
+        "CANDIDATE_NOTICE_10_BUSINESS_DAYS_PRIOR",
+        "NOTICE_OF_RIGHT_TO_REQUEST_ALTERNATIVE_PROCESS_OR_ACCOMMODATION"
+      ]
+    },
+    "not_applicable": {
+      "name": "Not Subject to LL144",
+      "needs_owner_review": true,
+      "criteria": {
+        "summary": "The tool is not used to substantially assist or replace a discretionary hiring or promotion decision, or the candidate/employee/position has no New York City nexus.",
+        "exemptions": [
+          "Tools used solely for scheduling or logistics, with no scoring or ranking role in the decision",
+          "Positions with no New York City nexus"
+        ]
+      },
+      "citations": ["NYC Admin. Code § 20-871 (definitions)"],
+      "required_controls": ["NO_LL144_OBLIGATIONS"]
+    }
+  }
+}

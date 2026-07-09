@@ -1,0 +1,49 @@
+{
+  "ai_system": {
+    "autonomy_level": "recommend_only",
+    "hitl_description": null,
+    "hitl_planned": "no",
+    "type": "classical_ml"
+  },
+  "created_at": "2026-07-09T19:18:41.805972",
+  "data": {
+    "jurisdictions": [
+      "US-CO"
+    ],
+    "sensitivity": [
+      "pii"
+    ],
+    "sources": [
+      "resumes",
+      "applicant tracking system"
+    ]
+  },
+  "description": "Automatically ranks job applicants by fit score for open recruitment requisitions; hiring managers receive the ranked list with no further review step in the current process.",
+  "existing_controls": [],
+  "impact": {
+    "business_impact_tier": "high",
+    "estimated_dollar_impact": null,
+    "reversibility": "partially_reversible",
+    "user_scope": [
+      "consumers"
+    ]
+  },
+  "initiative_id": "13aec038-bd19-449d-bb89-f4025fc0a22c",
+  "intake_metadata": {
+    "adversarial_flag": false,
+    "adversarial_reason": null,
+    "completeness_score": 0.95,
+    "intake_agent_version": "1.0.0",
+    "intake_duration_minutes": 13.0,
+    "interview_transcript_ref": null,
+    "prompt_manifest_sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+    "unknowns": []
+  },
+  "name": "Automated Candidate Ranking System",
+  "sponsor": {
+    "business_unit": "Human Resources",
+    "owner": "HR Systems Lead"
+  },
+  "target_deployment_date": null,
+  "third_party_vendors": []
+}

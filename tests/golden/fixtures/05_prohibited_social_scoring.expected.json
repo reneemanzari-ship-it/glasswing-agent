@@ -1,0 +1,23 @@
+{
+  "colorado_sb_205": {
+    "applicable": true,
+    "high_risk_category": "essential_government_service"
+  },
+  "eu_ai_act": {
+    "citations": [
+      "EU AI Act Article 5"
+    ],
+    "tier": "prohibited"
+  },
+  "human_review_required": true,
+  "nist_ai_rmf": {
+    "govern_attention": "critical",
+    "manage_attention": "critical",
+    "map_attention": "critical",
+    "measure_attention": "critical"
+  },
+  "nyc_ll144": {
+    "applicable": false
+  },
+  "overall_risk_tier": "prohibited"
+}

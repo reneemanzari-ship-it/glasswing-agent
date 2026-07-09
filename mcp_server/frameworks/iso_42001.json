@@ -1,0 +1,67 @@
+{
+  "framework_id": "iso_42001",
+  "name": "ISO/IEC 42001:2023 - Artificial Intelligence Management System",
+  "description": "International certifiable standard specifying requirements for establishing, implementing, maintaining, and continually improving an AI management system (AIMS) within organizations that develop, provide, or use products or services using AI systems. Structural note: unlike eu_ai_act/colorado_sb_205 (tier-based) or nist_ai_rmf (function-based), ISO 42001 is a management-system standard -- it does not assign a per-initiative risk tier. This dataset is a reference asset for the future controls engine (GLASSWING_SPEC.md section 3, Week 5), not an input to glasswing/engines/classification.py this week.",
+  "source_url": "https://www.iso.org/standard/81230.html",
+  "version": "ISO/IEC 42001:2023",
+  "framework_version": "2023",
+  "content_date": "2023-12-18",
+  "effective_from": "2023-12-18",
+  "effective_to": null,
+  "status": "enacted",
+  "structure_type": "management_system",
+  "verification_note": "NEEDS_OWNER_REVIEW: ISO/IEC 42001:2023 is a copyrighted, paywalled standard; the clause and Annex A structure below is built from publicly available secondary commentary (compliance-guide summaries), not the licensed primary text, and no attempt is made to reproduce exact control wording -- only clause topics, Annex A's 9 objective categories, and the total control count are recorded. This entire dataset requires Renee's review against a licensed copy of the standard before any client deliverable cites specific clause or control language. Verified via web search 2026-07-09. Sources: AI Safety Directory, 'ISO/IEC 42001: AI Management Systems Standard Guide (2026)' (https://aisecurityandsafety.org/en/guides/iso-42001-guide/); Gabriel Consultant, 'ISO 42001 Annex Control Objectives And Controls' (https://gabriel.hk/iso-42001-annex-control-objectives-and-controls/); Knowlee, 'ISO 42001 Checklist (2026): 38 Controls for AI Management' (https://www.knowlee.ai/blog/iso-42001-checklist-ai-management).",
+  "clauses": {
+    "4_context_of_the_organization": {
+      "name": "Context of the Organization",
+      "needs_owner_review": true,
+      "summary": "Identify internal and external factors affecting the AI management system, including stakeholder expectations, regulatory requirements, and the scope of the AIMS."
+    },
+    "5_leadership": {
+      "name": "Leadership",
+      "needs_owner_review": true,
+      "summary": "Top management demonstrates commitment, establishes an AI policy, and assigns roles and responsibilities for AI governance."
+    },
+    "6_planning": {
+      "name": "Planning",
+      "needs_owner_review": true,
+      "summary": "Conduct AI-specific risk assessments, set measurable AI objectives, and plan actions to address risks and opportunities."
+    },
+    "7_support": {
+      "name": "Support",
+      "needs_owner_review": true,
+      "summary": "Ensure adequate resources, competence, and awareness, and maintain documented information, including training staff on responsible AI practices."
+    },
+    "8_operation": {
+      "name": "Operation",
+      "needs_owner_review": true,
+      "summary": "Implement AI system lifecycle processes, conduct impact assessments, manage third-party AI components, and maintain operational controls."
+    },
+    "9_performance_evaluation": {
+      "name": "Performance Evaluation",
+      "needs_owner_review": true,
+      "summary": "Monitor, measure, analyze, and evaluate the AIMS, including internal audit and management review. (Standard ISO harmonized-structure clause topic; not independently confirmed against the primary text for this specific standard -- flagged for review.)"
+    },
+    "10_improvement": {
+      "name": "Improvement",
+      "needs_owner_review": true,
+      "summary": "Address nonconformities, take corrective action, and drive continual improvement of the AIMS."
+    }
+  },
+  "annex_a_controls": {
+    "needs_owner_review": true,
+    "summary": "Annex A (informative) provides 38 controls grouped into 9 objective categories (A.2-A.10). Controls are principle-based; organizations select applicable controls via a Statement of Applicability rather than implementing all 38 by default. Exact control-by-control text is not reproduced here -- see verification_note.",
+    "control_count": 38,
+    "objective_categories": {
+      "A.2": "AI policies",
+      "A.3": "Internal organization",
+      "A.4": "Resources",
+      "A.5": "Impact assessment",
+      "A.6": "AI system life cycle",
+      "A.7": "Data",
+      "A.8": "Information for interested parties",
+      "A.9": "Use of AI systems",
+      "A.10": "Third-party relationships"
+    }
+  }
+}

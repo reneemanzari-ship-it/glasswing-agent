@@ -63,10 +63,35 @@ def _load_framework_json(name: str) -> dict:
             return json.load(f)
     return {}
 
+
+def _version_mismatch_note(data: dict, version: str = None) -> str:
+    """Only one dataset version file exists per framework_id today (Week 2
+    just added version metadata to the existing files; nothing has been
+    re-versioned yet). `version` is accepted now so callers can start
+    pinning to it, but there is nothing to *select between* until a
+    framework actually gets a second version file -- so this only ever
+    warns that the requested version isn't the one loaded, rather than
+    silently ignoring the request or failing closed on it."""
+    if not version:
+        return ""
+    loaded_version = data.get("framework_version")
+    if loaded_version and version != loaded_version:
+        return (
+            f"\n\nNOTE: requested version '{version}' does not match the only "
+            f"version currently available ('{loaded_version}'). Returning "
+            f"'{loaded_version}' data; no other version is on file for this framework."
+        )
+    return ""
+
 @mcp.tool()
-def get_framework(framework_id: str) -> str:
+def get_framework(framework_id: str, version: str = None) -> str:
     """Retrieves framework metadata and structure by ID.
     Supported IDs: 'eu_ai_act', 'nist_ai_rmf', 'colorado_sb_205'.
+
+    `version` (optional): pin to a specific framework_version. Only one
+    version exists per framework today, so this currently only warns if
+    the requested version isn't the one on file -- see
+    _version_mismatch_note(). Omitting it is fully backward compatible.
     """
     data = _load_framework_json(framework_id)
     if not data:
@@ -76,53 +101,63 @@ def get_framework(framework_id: str) -> str:
         "name": data.get("name"),
         "description": data.get("description"),
         "version": data.get("version"),
+        "framework_version": data.get("framework_version"),
+        "status": data.get("status"),
+        "effective_from": data.get("effective_from"),
+        "effective_to": data.get("effective_to"),
         "source_url": data.get("source_url")
-    }, indent=2)
+    }, indent=2) + _version_mismatch_note(data, version)
 
 @mcp.tool()
-def get_tier_criteria(framework_id: str, tier: str) -> str:
+def get_tier_criteria(framework_id: str, tier: str, version: str = None) -> str:
     """Retrieves the criteria and details of a specific risk tier in a framework.
     Only applicable to tier-based frameworks (like 'eu_ai_act').
+
+    `version` (optional): see get_framework(). Omitting it is fully
+    backward compatible.
     """
     data = _load_framework_json(framework_id)
     if not data:
         return f"Framework '{framework_id}' not found."
-    
+
     tiers = data.get("tiers", {})
     if not tiers:
         return f"Framework '{framework_id}' is not tier-based."
-    
+
     tier_data = tiers.get(tier)
     if not tier_data:
         valid_tiers = ", ".join(tiers.keys())
         return f"Tier '{tier}' not found. Available tiers: {valid_tiers}"
-        
-    return json.dumps(tier_data, indent=2)
+
+    return json.dumps(tier_data, indent=2) + _version_mismatch_note(data, version)
 
 @mcp.tool()
-def get_function_attention_triggers(framework_id: str, function_name: str) -> str:
+def get_function_attention_triggers(framework_id: str, function_name: str, version: str = None) -> str:
     """Retrieves elevated and critical attention triggers for a specific NIST function.
     Only applicable to function-based frameworks (like 'nist_ai_rmf').
+
+    `version` (optional): see get_framework(). Omitting it is fully
+    backward compatible.
     """
     data = _load_framework_json(framework_id)
     if not data:
         return f"Framework '{framework_id}' not found."
-        
+
     functions = data.get("functions", {})
     if not functions:
         return f"Framework '{framework_id}' is not function-based."
-        
+
     func_data = functions.get(function_name.lower())
     if not func_data:
         valid_funcs = ", ".join(functions.keys())
         return f"Function '{function_name}' not found. Available functions: {valid_funcs}"
-        
+
     return json.dumps({
         "name": func_data.get("name"),
         "description": func_data.get("description"),
         "elevated_attention_triggers": func_data.get("elevated_attention_triggers", []),
         "critical_attention_triggers": func_data.get("critical_attention_triggers", [])
-    }, indent=2)
+    }, indent=2) + _version_mismatch_note(data, version)
 
 @mcp.tool()
 def get_required_controls(framework_id: str, tier_or_function: str) -> str:
@@ -153,12 +188,20 @@ def get_required_controls(framework_id: str, tier_or_function: str) -> str:
     return f"No controls found for '{tier_or_function}' in framework '{framework_id}'."
 
 @mcp.tool()
-def search_frameworks(use_case_description: str) -> str:
+def search_frameworks(use_case_description: str, as_of_date: str = None) -> str:
     """Searches across all loaded frameworks (scans tiers, functions, examples, and attention triggers)
     to find matches for a given use-case description.
+
+    `as_of_date` (optional, ISO date string): noted in the output when a
+    matched framework's status/effective window means the match may not
+    reflect current law as of that date (e.g. colorado_sb_205 is
+    `status: repealed`). Only one dataset version exists per framework
+    today, so this doesn't change which data is searched -- it only
+    annotates results. Omitting it is fully backward compatible.
     """
     frameworks = ["eu_ai_act", "nist_ai_rmf", "colorado_sb_205"]
     matches = []
+    status_notes = []
     
     # Preprocess description and expand query with synonyms
     raw_words = [w.strip(".,;:?!()\"'").lower() for w in use_case_description.split()]
@@ -242,11 +285,17 @@ def search_frameworks(use_case_description: str) -> str:
             matches.append(f"## Matches in {fw_name}:")
             for m in fw_matches:
                 matches.append(f"  * {m}")
-                
+            if as_of_date and data.get("status") in ("delayed", "amended", "repealed"):
+                status_notes.append(
+                    f"NOTE ({fw_name}): dataset status is '{data.get('status')}' -- "
+                    f"see its verification_note before treating this match as current "
+                    f"law as of {as_of_date}."
+                )
+
     if not matches:
         return f"No specific regulatory matches found for description: '{use_case_description}'"
-        
-    return "\n".join(matches)
+
+    return "\n".join(matches + ([""] + status_notes if status_notes else []))
 
 if __name__ == "__main__":
     import sys

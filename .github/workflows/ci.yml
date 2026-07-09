@@ -22,10 +22,10 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Run Week 1+ Governance OS test suite (offline)
-        run: pytest tests/glasswing -v
+        run: pytest tests/glasswing tests/golden -v
 
       - name: ruff check (glasswing/ and its tests)
-        run: ruff check glasswing/ tests/glasswing tests/tools tests/conftest.py
+        run: ruff check glasswing/ tests/glasswing tests/tools tests/conftest.py tests/golden
 
       - name: mypy --strict glasswing/
         run: mypy glasswing/

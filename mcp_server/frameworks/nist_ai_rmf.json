@@ -4,6 +4,12 @@
   "description": "Voluntary framework providing structured guidance for AI risk management. Function-based rather than tier-based.",
   "source_url": "https://www.nist.gov/itl/ai-risk-management-framework",
   "version": "1.0 (January 2023) with Generative AI Profile (July 2024)",
+  "framework_version": "1.0-2023",
+  "content_date": "2023-01-26",
+  "effective_from": "2023-01-26",
+  "effective_to": null,
+  "status": "enacted",
+  "verification_note": "NIST AI RMF 1.0 remains the current published, voluntary baseline; the Govern/Map/Measure/Manage function structure this dataset models is unchanged. A revision is in progress -- as of 2026-04, NIST had released a concept note for an AI RMF Profile on Trustworthy AI in Critical Infrastructure, and per America's AI Action Plan is revising the framework to remove references to misinformation, DEI, and climate change. No document labeled 'AI RMF 2.0' has been published. NEEDS_OWNER_REVIEW: watch for the revision's completion, since category wording (not the four-function structure) may change. Verified via web search 2026-07-09. Sources: NIST AI Risk Management Framework (https://www.nist.gov/itl/ai-risk-management-framework); NIST AI RMF Development (https://www.nist.gov/itl/ai-risk-management-framework/ai-rmf-development); ISPartners, 'NIST AI RMF 2025-2026 Updates' (https://www.ispartnersllc.com/blog/nist-ai-rmf-2025-2026-updates-what-you-need-to-know-about-the-latest-framework-changes/).",
   "functions": {
     "govern": {
       "name": "GOVERN",

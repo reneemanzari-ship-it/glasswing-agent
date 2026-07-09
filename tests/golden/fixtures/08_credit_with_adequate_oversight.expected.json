@@ -1,0 +1,25 @@
+{
+  "colorado_sb_205": {
+    "applicable": true,
+    "high_risk_category": "financial_lending"
+  },
+  "eu_ai_act": {
+    "citations": [
+      "EU AI Act Annex III(5)(b)"
+    ],
+    "confidence": 0.95,
+    "tier": "high_risk"
+  },
+  "human_review_reasons": [],
+  "human_review_required": false,
+  "nist_ai_rmf": {
+    "govern_attention": "routine",
+    "manage_attention": "critical",
+    "map_attention": "critical",
+    "measure_attention": "elevated"
+  },
+  "nyc_ll144": {
+    "applicable": false
+  },
+  "overall_risk_tier": "high"
+}

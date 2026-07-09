@@ -30,6 +30,11 @@ class OverallRiskTier(str, Enum):
     MODERATE = "moderate"
     HIGH = "high"
     CRITICAL = "critical"
+    # Added Week 2 (GLASSWING_SPEC.md section 3): needed to represent R5's
+    # "UNACCEPTABLE -> prohibited" mapping (prompts/risk_classifier.md) once
+    # the migrated engine can assign EUAIActTier.PROHIBITED, which v0.1
+    # never did. Purely additive -- no existing value changed or removed.
+    PROHIBITED = "prohibited"
 
 
 class FrameworkClassification(BaseModel):

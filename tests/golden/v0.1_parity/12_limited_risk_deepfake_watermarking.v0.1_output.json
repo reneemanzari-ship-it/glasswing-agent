@@ -1,0 +1,46 @@
+{
+  "risk_profile_id": "7c2c0e04-9515-4485-b137-ed7a90fcfe1d",
+  "initiative_id": "4faaac4d-0055-4603-9a34-7a48dace849c",
+  "created_at": "2026-07-09T19:18:41.834538",
+  "classifications": {
+    "eu_ai_act": {
+      "citations": [
+        "EU AI Act Article 50"
+      ],
+      "rationale": "This system interacts directly with natural persons (chatbot/conversational AI) and owes them a transparency disclosure under Article 50, even though it makes no consequential decisions under Annex III or Colorado SB 205.",
+      "confidence": 0.9,
+      "tier": "limited_risk",
+      "applicable_annexes": []
+    },
+    "nist_ai_rmf": {
+      "citations": [
+        "NIST AI RMF MEASURE-1",
+        "MANAGE-2"
+      ],
+      "rationale": "Conversational AI interacting directly with consumers requires elevated attention to measurement and management of response quality and escalation, though it does not rise to consequential-decision-making critical attention.",
+      "confidence": 0.9,
+      "govern_attention": "routine",
+      "map_attention": "routine",
+      "measure_attention": "elevated",
+      "manage_attention": "elevated",
+      "critical_categories": []
+    },
+    "colorado_sb_205": {
+      "citations": [
+        "C.R.S. § 6-1-1701(7)(b)"
+      ],
+      "rationale": "System does not make or substantially factor into a consequential decision affecting consumer life opportunities; routine customer service interaction only.",
+      "confidence": 0.9,
+      "applicable": false,
+      "high_risk_category": null
+    }
+  },
+  "overall_risk_tier": "moderate",
+  "regulatory_exposure_summary": "Moderate regulatory exposure under EU AI Act Limited Risk (Article 50 transparency obligations); no high-risk trigger under Annex III or Colorado SB 205.",
+  "human_review_required": false,
+  "human_review_reasons": [],
+  "classifier_agent_version": "1.0.0",
+  "prompt_manifest_sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+  "mcp_server_version": "1.0.0",
+  "model_id": "claude-sonnet-4-5-20250115"
+}

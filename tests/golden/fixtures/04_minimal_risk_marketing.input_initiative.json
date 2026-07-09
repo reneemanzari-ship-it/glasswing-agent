@@ -1,0 +1,49 @@
+{
+  "ai_system": {
+    "autonomy_level": "recommend_only",
+    "hitl_description": "Marketing team reviews and approves all drafts before any external publication.",
+    "hitl_planned": "yes",
+    "type": "llm"
+  },
+  "created_at": "2026-07-09T19:18:41.805750",
+  "data": {
+    "jurisdictions": [
+      "US-NY"
+    ],
+    "sensitivity": [
+      "none"
+    ],
+    "sources": [
+      "public product documentation",
+      "internal style guides"
+    ]
+  },
+  "description": "AI generates draft blog posts for internal marketing review. No customer data is used, and content is never distributed externally without human approval.",
+  "existing_controls": [],
+  "impact": {
+    "business_impact_tier": "low",
+    "estimated_dollar_impact": null,
+    "reversibility": "fully_reversible",
+    "user_scope": [
+      "internal_employees"
+    ]
+  },
+  "initiative_id": "d585aa7e-8c4a-447e-be75-19aad66b8ad3",
+  "intake_metadata": {
+    "adversarial_flag": false,
+    "adversarial_reason": null,
+    "completeness_score": 0.9,
+    "intake_agent_version": "1.0.0",
+    "intake_duration_minutes": 8.0,
+    "interview_transcript_ref": null,
+    "prompt_manifest_sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+    "unknowns": []
+  },
+  "name": "Marketing Draft Assistant",
+  "sponsor": {
+    "business_unit": "Marketing Operations",
+    "owner": "Marketing Ops Lead"
+  },
+  "target_deployment_date": null,
+  "third_party_vendors": []
+}

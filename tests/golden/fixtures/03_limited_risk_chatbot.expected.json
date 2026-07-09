@@ -1,0 +1,25 @@
+{
+  "colorado_sb_205": {
+    "applicable": false,
+    "high_risk_category": null
+  },
+  "eu_ai_act": {
+    "citations": [
+      "EU AI Act Article 50"
+    ],
+    "confidence": 0.9,
+    "tier": "limited_risk"
+  },
+  "human_review_reasons": [],
+  "human_review_required": false,
+  "nist_ai_rmf": {
+    "govern_attention": "routine",
+    "manage_attention": "elevated",
+    "map_attention": "routine",
+    "measure_attention": "elevated"
+  },
+  "nyc_ll144": {
+    "applicable": false
+  },
+  "overall_risk_tier": "moderate"
+}

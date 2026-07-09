@@ -1,0 +1,47 @@
+{
+  "risk_profile_id": "bac3b42f-886f-41ee-8889-29df6141a0ee",
+  "initiative_id": "2646ee82-70b9-45e5-91c9-654bee3a3497",
+  "created_at": "2026-07-09T19:18:41.828509",
+  "classifications": {
+    "eu_ai_act": {
+      "citations": [
+        "EU AI Act Annex III(4)(a)"
+      ],
+      "rationale": "Vetting and screening applications for recruitment purposes is a high-risk sector category under EU AI Act.",
+      "confidence": 0.9,
+      "tier": "high_risk",
+      "applicable_annexes": [
+        "Annex III(4)(a)"
+      ]
+    },
+    "nist_ai_rmf": {
+      "citations": [
+        "NIST AI RMF MAP-2"
+      ],
+      "rationale": "Employment decisions significantly impact natural persons, necessitating elevated attention levels across measurement and mapping.",
+      "confidence": 0.85,
+      "govern_attention": "routine",
+      "map_attention": "elevated",
+      "measure_attention": "elevated",
+      "manage_attention": "routine",
+      "critical_categories": []
+    },
+    "colorado_sb_205": {
+      "citations": [
+        "C.R.S. § 6-1-1701(7)(a)"
+      ],
+      "rationale": "AI tools utilized to make employment opportunities determinations are consequential and subject to SB 205.",
+      "confidence": 0.9,
+      "applicable": true,
+      "high_risk_category": "employment"
+    }
+  },
+  "overall_risk_tier": "high",
+  "regulatory_exposure_summary": "High regulatory exposure under EU AI Act Annex III(4) and Colorado SB 205 (employment).",
+  "human_review_required": false,
+  "human_review_reasons": [],
+  "classifier_agent_version": "1.0.0",
+  "prompt_manifest_sha": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+  "mcp_server_version": "1.0.0",
+  "model_id": "claude-sonnet-4-5-20250115"
+}

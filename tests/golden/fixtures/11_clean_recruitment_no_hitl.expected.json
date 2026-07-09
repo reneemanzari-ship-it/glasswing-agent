@@ -1,0 +1,28 @@
+{
+  "colorado_sb_205": {
+    "applicable": true,
+    "high_risk_category": "employment"
+  },
+  "eu_ai_act": {
+    "citations": [
+      "EU AI Act Annex III(4)(a)"
+    ],
+    "confidence": 0.9,
+    "tier": "high_risk"
+  },
+  "human_review_reasons": [
+    "High stakes employment decision system reports hitl_planned=no; human oversight not confirmed.",
+    "Mandatory control gap: EU AI Act Article 14 (Human Oversight) and Colorado SB 205 Right to Appeal and Human Review are required for this tier, but the initiative reports no human-in-the-loop and no equivalent control in existing_controls."
+  ],
+  "human_review_required": true,
+  "nist_ai_rmf": {
+    "govern_attention": "routine",
+    "manage_attention": "routine",
+    "map_attention": "elevated",
+    "measure_attention": "elevated"
+  },
+  "nyc_ll144": {
+    "applicable": false
+  },
+  "overall_risk_tier": "high"
+}
