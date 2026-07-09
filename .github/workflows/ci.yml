@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  glasswing:
+    name: glasswing (offline, ruff, mypy strict)
+    runs-on: ubuntu-latest
+    env:
+      GLASSWING_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package and dev dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run Week 1+ Governance OS test suite (offline)
+        run: pytest tests/glasswing -v
+
+      - name: ruff check (glasswing/ and its tests)
+        run: ruff check glasswing/ tests/glasswing tests/tools tests/conftest.py
+
+      - name: mypy --strict glasswing/
+        run: mypy glasswing/
+
+      - name: Full legacy test suite (visibility only, see DECISIONS.md D-007/D-008)
+        run: pytest -v
+        continue-on-error: true

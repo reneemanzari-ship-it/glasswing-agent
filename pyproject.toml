@@ -1,23 +1,34 @@
 [project]
 name = "glasswing"
 version = "0.1.0"
-description = "A multi-agent AI governance system for automated compliance and risk tier classification"
+description = "A single-operator AI governance system for automated compliance, risk classification, and monitoring"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    # v0.1 agents (still live until retired per GLASSWING_SPEC.md section 5)
     "google-adk>=2.3.0",
     "mcp>=1.2.0",
     "anthropic>=0.26.0",
-    "pydantic>=2.7.0",
     "streamlit>=1.35.0",
-    "python-dotenv>=1.0.1"
+    "python-dotenv>=1.0.1",
+    # Governance OS foundation (Phase 1, Week 1)
+    "pydantic>=2.7.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
+    "typer>=0.12.0",
+    "structlog>=24.1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.2.0",
-    "ruff>=0.4.0"
+    "pytest-socket>=0.7.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
 ]
+
+[project.scripts]
+glasswing = "glasswing.cli.app:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -29,7 +40,7 @@ build-backend = "hatchling.build"
 # `pip install -e .` fails immediately on a clean checkout with "Unable to
 # determine which files to ship inside the wheel."
 [tool.hatch.build.targets.wheel]
-packages = ["agents", "schemas", "orchestration", "mcp_server", "security", "skills", "ui"]
+packages = ["glasswing", "agents", "schemas", "orchestration", "mcp_server", "security", "skills", "ui"]
 
 [tool.ruff]
 line-length = 88
@@ -38,6 +49,11 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "B"]
 ignore = []
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["glasswing"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
