@@ -1,0 +1,52 @@
+{
+  "framework_id": "colorado_admt",
+  "name": "Colorado SB 26-189 (Automated Decision-Making Technology)",
+  "description": "Colorado law establishing consumer notice, disclosure, and human-review rights for automated decision-making technology (ADMT) used in consequential decisions. Repeals and replaces SB 24-205's risk-management/impact-assessment framework (colorado_sb_205, now repealed) with a narrower disclosure-and-rights model: no duty of care against algorithmic discrimination, no deployer risk-management program, no annual impact assessment survive from the predecessor.",
+  "source_url": "https://leg.colorado.gov/bills/sb26-189",
+  "version": "Signed May 14, 2026",
+  "framework_version": "1.0-sb26-189",
+  "content_date": "2026-07-10",
+  "effective_from": "2027-01-01",
+  "effective_to": null,
+  "status": "delayed",
+  "supersedes": "colorado_sb_205",
+  "verification_note": "Verified via web search and a fetch of the Colorado General Assembly's own SB26-189 bill page (https://leg.colorado.gov/bills/sb26-189) plus Norton Rose Fulbright's client summary, 2026-07-10 (Week 3 parallel cleanup). Governor Polis signed SB 26-189 on 2026-05-14. It repeals and reenacts SB 24-205 (colorado_sb_205, framework_version 1.0-sb24-205, now status=repealed with superseded_by=colorado_admt) with a substantively different scheme -- 'automated decision-making technology' (ADMT) and 'consequential decision' replace 'high-risk AI system'; the duty of care against algorithmic discrimination, the deployer risk-management-program requirement, and the annual impact-assessment requirement are all removed entirely (confirmed by Norton Rose Fulbright's summary), not carried forward in any form. This is why the successor is modeled as a new framework_id (colorado_admt) rather than a version bump of colorado_sb_205: the statutory identity, defined terms, and substantive obligations all changed, per the repeal-and-replace test in docs/framework_authoring_guide.md section 7. EFFECTIVE DATE UNRESOLVED: the Colorado General Assembly's own bill page states January 1, 2027 for developer documentation requirements specifically, and suggests August 12, 2026 for 'the act itself' (Colorado's standard effective date for a bill without a safety clause, 90 days after the 2026-05-13 adjournment) -- implying deployer notice/disclosure obligations might bind before developer documentation obligations do. Norton Rose Fulbright's summary states a single 2027-01-01 effective date with no split. The primary enrolled bill text (https://leg.colorado.gov/bill_files/116489/download) could not be fetched directly (exceeds this tool's size limit) to resolve the discrepancy. This dataset conservatively uses 2027-01-01 (the later, more corroborated date, and the one that governs the developer-documentation control this dataset lists) -- NEEDS_OWNER_REVIEW to confirm whether deployer notice/disclosure obligations actually bind as of 2026-08-12 instead, which would matter for any engagement in that window. Regardless of which date is correct, AS OF TODAY (2026-07-10) NEITHER is effective yet: Colorado currently has no comprehensive AI/ADMT statute in force (SB 24-205 repealed before ever taking effect; SB 26-189 not yet effective under either candidate date) -- this is a real, verified finding, not a gap in this dataset. Specific C.R.S. section citations were not confirmed against the primary text and are recorded generically pending that review. Sources: Colorado General Assembly, SB26-189 bill page (https://leg.colorado.gov/bills/sb26-189); Norton Rose Fulbright, 'Colorado enacts revised AI law' (https://www.nortonrosefulbright.com/en-us/knowledge/publications/18733d31/colorado-enacts-revised-ai-law).",
+  "tiers": {
+    "covered_admt_consequential_decision": {
+      "name": "Covered ADMT Used in a Consequential Decision",
+      "needs_owner_review": true,
+      "criteria": {
+        "summary": "Automated decision-making technology (ADMT) -- technology that processes personal data and uses computation to generate output (predictions, recommendations, classifications, rankings, or scores) that is used to make, guide, or assist a consequential decision -- concerning an individual's access to, eligibility for, or compensation related to education, employment, housing, financial or lending services, insurance, health care services, or essential government services and public benefits.",
+        "consequential_decision_categories": {
+          "education": "Education",
+          "employment": "Employment",
+          "housing": "Housing",
+          "financial_lending": "Financial or lending services",
+          "insurance": "Insurance",
+          "healthcare": "Health care services",
+          "essential_government_service": "Essential government services and public benefits"
+        }
+      },
+      "citations": ["SB 26-189 (2026), signed 2026-05-14"],
+      "required_controls": [
+        "CONSUMER_NOTICE_AT_POINT_OF_INTERACTION",
+        "PLAIN_LANGUAGE_DISCLOSURE_WITHIN_30_DAYS_OF_ADVERSE_OUTCOME",
+        "CONSUMER_RIGHT_TO_REQUEST_PERSONAL_DATA_USED_BY_ADMT",
+        "CONSUMER_RIGHT_TO_CORRECT_INCORRECT_PERSONAL_DATA",
+        "CONSUMER_RIGHT_TO_MEANINGFUL_HUMAN_REVIEW_AFTER_ADVERSE_OUTCOME",
+        "DEVELOPER_TECHNICAL_DOCUMENTATION",
+        "DEVELOPER_NOTICE_OF_MATERIAL_UPDATES_TO_DEPLOYER",
+        "COMPLIANCE_RECORDS_RETENTION_3_YEARS"
+      ]
+    },
+    "not_applicable": {
+      "name": "Not Subject to SB 26-189",
+      "needs_owner_review": true,
+      "criteria": {
+        "summary": "The system is not ADMT as defined (does not process personal data to generate a qualifying output), or its output is not used to make, guide, or assist a consequential decision in a listed category."
+      },
+      "citations": ["SB 26-189 (2026), definitions"],
+      "required_controls": ["NO_SB_26_189_OBLIGATIONS"]
+    }
+  }
+}

@@ -424,8 +424,14 @@ def classify_initiative(initiative: Initiative) -> RiskProfile:
 def classify_nyc_ll144(initiative: Initiative) -> NYCLL144Classification:
     """NYC Local Law 144 (Automated Employment Decision Tools) applicability.
 
-    New Week 2 capability -- see glasswing/core/ll144.py's docstring for why
-    this is a separate model/function rather than a field on RiskProfile.
+    Low-level building block -- build_per_framework_results() below is
+    what the Phase 1 -> Phase 2 contract and Week 6 report actually read;
+    this function stays independently callable/testable, and its result
+    model (glasswing.core.ll144.NYCLL144Classification) stays a plain
+    Pydantic model rather than a schemas.risk_profile.RiskProfile field,
+    since that model is the v0.1-parity-tested internal shape
+    classify_initiative() still returns, not the forward contract
+    (DECISIONS.md D-010).
 
     Applicable when the initiative is used to substantially assist or
     replace a discretionary employment decision (screening, ranking, or
@@ -466,3 +472,67 @@ def classify_nyc_ll144(initiative: Initiative) -> NYCLL144Classification:
         confidence=0.85,
         requires_bias_audit=False,
     )
+
+
+def build_per_framework_results(initiative: Initiative) -> dict[str, dict[str, object]]:
+    """The uniform, forward-facing classification payload -- this is the
+    shape glasswing.core.risk.RiskProfile.per_framework_results holds, and
+    what the Phase 1 -> Phase 2 contract (GLASSWING_SPEC.md section 4,
+    which consumes overall_tier and per-framework results) and the Week 6
+    report (which carries every framework's classification uniformly) are
+    meant to read.
+
+    Every framework -- eu_ai_act, nist_ai_rmf, colorado_sb_205, and
+    nyc_ll144 -- appears as a same-shaped dict entry keyed by framework_id,
+    so a report renderer or a Phase 2 policy-derivation step iterates
+    uniformly over frameworks without special-casing LL144 as a fourth,
+    differently-discovered thing (DECISIONS.md D-010: resolves the
+    Week 2 rationale for a separate model, which did not hold once
+    per_framework_results -- a plain JSON dict -- was available to hold
+    it uniformly).
+
+    overall_risk_tier and human_review_required are NOT included here:
+    they come from classify_initiative()'s RiskProfile directly, driven
+    solely by the EU AI Act tier per R5 -- LL144 applicability never
+    raises or substitutes for the overall tier, the same guarantee R5
+    already gives NIST attention.
+    """
+    profile = classify_initiative(initiative)
+    ll144 = classify_nyc_ll144(initiative)
+    eu = profile.classifications.eu_ai_act
+    nist = profile.classifications.nist_ai_rmf
+    co = profile.classifications.colorado_sb_205
+
+    return {
+        "eu_ai_act": {
+            "tier": eu.tier.value,
+            "citations": eu.citations,
+            "rationale": eu.rationale,
+            "confidence": eu.confidence,
+            "applicable_annexes": eu.applicable_annexes,
+        },
+        "nist_ai_rmf": {
+            "govern_attention": nist.govern_attention.value,
+            "map_attention": nist.map_attention.value,
+            "measure_attention": nist.measure_attention.value,
+            "manage_attention": nist.manage_attention.value,
+            "citations": nist.citations,
+            "rationale": nist.rationale,
+            "confidence": nist.confidence,
+            "critical_categories": nist.critical_categories,
+        },
+        "colorado_sb_205": {
+            "applicable": co.applicable,
+            "high_risk_category": co.high_risk_category,
+            "citations": co.citations,
+            "rationale": co.rationale,
+            "confidence": co.confidence,
+        },
+        "nyc_ll144": {
+            "applicable": ll144.applicable,
+            "citations": ll144.citations,
+            "rationale": ll144.rationale,
+            "confidence": ll144.confidence,
+            "requires_bias_audit": ll144.requires_bias_audit,
+        },
+    }

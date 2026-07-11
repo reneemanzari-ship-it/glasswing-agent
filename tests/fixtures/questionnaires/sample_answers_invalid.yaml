@@ -1,0 +1,10 @@
+# Engine test scaffolding. Deliberately invalid: q_hitl (a required
+# base question with no `required: false`) has no answer, which must
+# fail QuestionnaireValidationError and route to human review rather
+# than crash or silently proceed.
+q_name: "Broken Fixture"
+q_description: "This answers file is intentionally invalid for testing the schema-validation gate."
+q_system_type: "lending"
+q_modality: "classical_ml"
+q_autonomy: "recommend_only"
+q_lending_details: "Deliberately incomplete submission."

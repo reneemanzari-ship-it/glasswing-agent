@@ -1,0 +1,80 @@
+# Engine test scaffolding ONLY -- NOT a client deliverable, NOT a
+# generalization of any real intake methodology (GLASSWING_SPEC.md
+# section 3, Week 3; DECISIONS.md D-019). The real
+# questionnaires/governance_intake_v1.yaml content is authored
+# separately and must validate against the same schema this exercises
+# with zero engine changes: question id, text, type, options, branch,
+# maps_to (into an Initiative or EvidenceRecord field, GLASSWING_SPEC.md
+# section 2.6).
+#
+# Schema:
+#   questionnaire_id: str
+#   version: str
+#   questions:
+#     - id: str (unique)
+#       text: str
+#       type: text | boolean | number | single_select | multi_select
+#       options: [str, ...]        # required for *_select types
+#       required: bool             # default true
+#       maps_to: "initiative.<field>" | "evidence.<field>"
+#       branch:                    # optional
+#         <answer_value>: [<question_id>, ...]  # unlocked when this
+#                                                # question's answer
+#                                                # equals answer_value
+#
+# All Initiative-required fields (name, description, modality,
+# autonomy_level, hitl_planned) are deliberately base questions, asked on
+# every path -- only the extra evidence-only detail questions are
+# branch-conditional, so a valid submission on any path always has
+# everything the Initiative model requires.
+questionnaire_id: sample_intake_v0
+version: "1"
+questions:
+  - id: q_name
+    text: "What is the name of this AI system or initiative?"
+    type: text
+    maps_to: initiative.name
+
+  - id: q_description
+    text: "Describe what this system does in a sentence or two."
+    type: text
+    maps_to: initiative.description
+
+  - id: q_system_type
+    text: "Which of these best describes this system's primary use?"
+    type: single_select
+    options: ["lending", "chatbot", "other"]
+    maps_to: evidence.system_type_category
+    branch:
+      lending: [q_lending_details]
+      chatbot: [q_chatbot_details]
+
+  - id: q_modality
+    text: "What kind of AI system is this?"
+    type: single_select
+    options: ["llm", "classical_ml", "computer_vision", "multi_agent", "hybrid", "other"]
+    maps_to: initiative.modality
+
+  - id: q_autonomy
+    text: "How autonomous is this system's decision-making?"
+    type: single_select
+    options: ["recommend_only", "approve_with_override", "fully_autonomous"]
+    maps_to: initiative.autonomy_level
+
+  - id: q_hitl
+    text: "Is a human in the loop before this system's output takes effect?"
+    type: single_select
+    options: ["yes", "no", "partial", "unknown"]
+    maps_to: initiative.hitl_planned
+
+  - id: q_lending_details
+    text: "Describe the lending decision this system supports."
+    type: text
+    required: false
+    maps_to: evidence.lending_details
+
+  - id: q_chatbot_details
+    text: "What topics or scope does this chatbot handle?"
+    type: text
+    required: false
+    maps_to: evidence.chatbot_scope_notes

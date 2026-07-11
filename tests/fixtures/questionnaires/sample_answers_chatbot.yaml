@@ -1,0 +1,10 @@
+# Engine test scaffolding. Answers to sample_intake_v0.yaml along the
+# "chatbot" branch -- q_chatbot_details is active and answered;
+# q_lending_details is not active on this path and is correctly absent.
+q_name: "FixtureCorp Support Chatbot"
+q_description: "Handles customer support inquiries about order status."
+q_system_type: "chatbot"
+q_modality: "llm"
+q_autonomy: "approve_with_override"
+q_hitl: "partial"
+q_chatbot_details: "Order status, returns, and account questions."

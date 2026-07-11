@@ -1,0 +1,10 @@
+# Engine test scaffolding. Answers to sample_intake_v0.yaml along the
+# "lending" branch -- q_lending_details is active and answered;
+# q_chatbot_details is not active on this path and is correctly absent.
+q_name: "FixtureCorp Lending Assistant"
+q_description: "Recommends credit pre-approval tiers for consumer loans."
+q_system_type: "lending"
+q_modality: "classical_ml"
+q_autonomy: "recommend_only"
+q_hitl: "yes"
+q_lending_details: "Pre-approval scoring for unsecured personal loans."

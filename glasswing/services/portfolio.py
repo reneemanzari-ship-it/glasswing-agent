@@ -17,15 +17,22 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from glasswing.core.evidence import EvidenceSourceType
 from glasswing.core.lifecycle import LifecycleState
 from glasswing.services import audit
-from glasswing.storage.models import ApprovalDecisionRow, InitiativeRow
+from glasswing.storage.models import (
+    ApprovalDecisionRow,
+    EvidenceRecordRow,
+    InitiativeRow,
+)
 
 EVENT_INITIATIVE_CREATED = "initiative_created"
+EVENT_EVIDENCE_RECORDED = "evidence_recorded"
 EVENT_STATE_TRANSITIONED = "state_transitioned"
 
 # Legal edges implemented this week: DRAFT -> ... -> {APPROVED |
@@ -125,6 +132,45 @@ def create_initiative(
         },
     )
     return initiative
+
+
+def record_evidence(
+    session: Session,
+    *,
+    initiative: InitiativeRow,
+    source_type: EvidenceSourceType,
+    content: dict[str, Any],
+    actor: str = "system",
+    source_document_hash: str | None = None,
+    extraction_confidence: float | None = None,
+) -> EvidenceRecordRow:
+    """Creates an evidence_records row for `initiative` and logs its
+    creation, mirroring create_initiative()'s audit pattern. Used by the
+    Week 3 questionnaire runner (glasswing/intake/questionnaire_runner.py)
+    and, from Week 4 on, the Evidence Extraction Agent's offline path.
+    """
+    evidence = EvidenceRecordRow(
+        initiative_id=initiative.id,
+        source_type=source_type.value,
+        content=content,
+        source_document_hash=source_document_hash,
+        extraction_confidence=extraction_confidence,
+    )
+    session.add(evidence)
+    session.flush()
+
+    audit.append_entry(
+        session,
+        engagement_id=initiative.engagement_id,
+        event_type=EVENT_EVIDENCE_RECORDED,
+        actor=actor,
+        payload={
+            "initiative_id": str(initiative.id),
+            "evidence_record_id": str(evidence.id),
+            "source_type": source_type.value,
+        },
+    )
+    return evidence
 
 
 def _check_preconditions(

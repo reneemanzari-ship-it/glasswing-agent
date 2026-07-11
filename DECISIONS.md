@@ -218,6 +218,40 @@ disposition table). Making it optional still touches a shared schema
 outside this week's scope for no real benefit -- a separate model has
 zero blast radius on v0.1 and is just as testable.
 
+Update — 2026-07-10 (Week 3 pre-work B): the stated rationale above didn't
+survive scrutiny. `schemas.risk_profile.RiskProfile.Classifications` was
+never the target that mattered -- `glasswing.core.risk.RiskProfile.
+per_framework_results` is (a plain `dict[str, Any]`, per glasswing/core/
+risk.py), and it was always able to hold a fourth `nyc_ll144` entry
+without touching any schema at all. Keeping LL144 behind a separately-
+discovered function meant the Phase 1 -> Phase 2 contract (GLASSWING_SPEC.md
+section 4, which consumes `overall_tier` and per-framework results) and
+the Week 6 report (which is supposed to carry every framework's
+classification uniformly) would have had to special-case a fourth
+framework rather than iterating uniformly.
+
+Resolved: LL144 now folds into the uniform payload.
+`engines/classification.py::build_per_framework_results(initiative)`
+returns `{"eu_ai_act": {...}, "nist_ai_rmf": {...}, "colorado_sb_205":
+{...}, "nyc_ll144": {...}}` -- every entry a same-shaped dict keyed by
+framework_id, which is exactly the `per_framework_results` shape. This is
+now the function the Phase 1 -> Phase 2 contract and the Week 6 report
+should call. `classify_nyc_ll144()` and `NYCLL144Classification` remain
+(a low-level building block `build_per_framework_results()` composes,
+still independently testable), but they are no longer the primary
+interface -- the original "separate model, separate function" design
+for LL144 itself is superseded by this update; only the low-level
+classifier function/model survive, now as an implementation detail.
+
+`overall_risk_tier`/`human_review_required` are deliberately NOT in
+`per_framework_results` -- they still come from `classify_initiative()`'s
+`RiskProfile` directly, driven solely by the EU AI Act tier per R5. LL144
+applicability never raises or substitutes for the overall tier, exactly
+the guarantee R5 already gives NIST attention; folding LL144 in per se
+doesn't change that invariant.
+Status: RESOLVED — no longer open. See
+tests/golden/test_per_framework_results.py.
+
 ## D-011 — 2026-07-09 — Adding EU AI Act Article 5 (Prohibited) capability: new engine branch and a schema gap it exposed
 
 Question: the 12-fixture golden set must span all four EU AI Act tiers,
@@ -350,3 +384,148 @@ isn't used by anything R1-R9 or the golden fixture set exercises this
 week; new MCP tools (get_controls_for_tier, get_monitoring_template) are
 explicitly Week 5 scope, and expanding get_required_controls now would be
 scope volunteered rather than requested.
+
+## D-018 — 2026-07-10 — GDPR is Phase 3 scope, not a Week 2 gap
+
+Note (Week 3 pre-work D): GDPR does not appear among Glasswing's
+frameworks and this is deliberate, not an oversight. GLASSWING_SPEC.md
+section 2.7 names the framework set explicitly (EU AI Act, NIST AI RMF,
+Colorado SB 205, plus ISO/IEC 42001 and NYC LL144 added Week 2) --
+GDPR was never in that set. docs/framework_authoring_guide.md section 8
+uses GDPR as a worked example for *how* to add a new framework when the
+time comes; it is a methodology illustration, not a scheduling
+commitment.
+
+Choice: GDPR is tracked as intended Phase 3 scope, alongside data
+governance (GLASSWING_SPEC.md section 3, weeks 12-13), where
+data_classification (PII) already drives control prescription per the
+Phase 1 -> Phase 3 interface (section 4). Adding GDPR now, ahead of that
+week, would be building ahead of scope for a framework with no golden
+fixture requirement and no consuming engine logic yet.
+
+Why: recording this explicitly closes the question the same way D-013
+closes SB 205's category-coverage question -- so a future session (or
+Renee, reviewing scope) doesn't mistake an intentional sequencing
+decision for a dropped requirement.
+Status: RESOLVED -- tracked for Phase 3, weeks 12-13.
+
+## D-019 — 2026-07-10 — governance_intake_v1.yaml content is out of scope for Sonnet
+
+Question: GLASSWING_SPEC.md section 3 Week 3 item 2 says to author
+questionnaires/governance_intake_v1.yaml as a structural generalization of
+Renee's Voyager 47-question framework. That framework's actual questions
+were never supplied in this session or found anywhere in the repo
+(checked Fable/GLASSWING_HANDOFF.md, which references it but contains no
+question content).
+
+Choice (per Renee's explicit direction this session): the structural
+generalization of the real intake content is authored separately by
+Renee and Opus, and is out of glasswing/engines/questionnaire.py's scope
+entirely -- an IP-sensitive transformation, not an engineering task. This
+week's deliverable is the engine and the YAML schema it consumes
+(question id, text, type, options, branch, maps_to), proven against
+tests/fixtures/questionnaires/sample_intake_v0.yaml -- a small, fictional,
+clearly-labeled scaffold that exercises every engine capability (multiple
+question types, a genuinely divergent branch, Initiative and
+EvidenceRecord field mappings) without containing or approximating any
+real client or methodology content.
+
+Why: raw questionnaire content is never to be ingested or generated by
+Sonnet this week; the real governance_intake_v1.yaml must drop into
+engines/questionnaire.py as pure data, validating against the schema
+above with zero engine changes -- this is what "engine consumes data, no
+question content hardcoded" (the module's own docstring) actually buys.
+Status: RESOLVED -- engine ships this week; real questionnaire content
+follows in a separate delivery.
+
+## D-020 — 2026-07-10 — Colorado SB 26-189: successor dataset authored as a new framework_id
+
+Question: Week 2 (D-015) found SB 24-205 repealed and replaced by SB
+26-189 but didn't author the successor, since the bill's actual content
+wasn't verified. This week's parallel cleanup re-opened that with web
+search (Colorado General Assembly's own SB26-189 bill page plus a law
+firm client alert), confirming: signed 2026-05-14; "automated
+decision-making technology" (ADMT) and "consequential decision" replace
+"high-risk AI system"; deployer notice/disclosure/human-review-request
+obligations and developer documentation obligations replace the prior
+duty of care against algorithmic discrimination, risk-management
+program, and annual impact assessment (none of which survive in any
+form).
+
+Choice: authored mcp_server/frameworks/colorado_admt.json as a new
+framework_id (not a version bump of colorado_sb_205), with
+supersedes: colorado_sb_205 and a matching superseded_by: colorado_admt
+pointer added to colorado_sb_205.json's now-repealed record, per
+docs/framework_authoring_guide.md section 7's repeal-and-replace test:
+the statutory identity, defined terms, and substantive obligations all
+changed, so this is two framework_ids, not one framework_id with two
+versions.
+
+Why: folding this into colorado_sb_205's existing tiers would silently
+misrepresent obligations that no longer exist (risk-management program,
+impact assessment) as still live, and would lose the "never edit a
+published version in place" guarantee for any classification already
+pinned to colorado_sb_205's content.
+
+Not fully closed: the enrolled bill's full PDF text exceeded this
+session's fetch size limit, so exact C.R.S. section citations are not
+confirmed, and two sources disagree on the effective date (Colorado
+General Assembly's own page suggests 2026-08-12 for the act generally
+and 2027-01-01 specifically for developer documentation; a law firm
+summary states a single 2027-01-01 date with no split) --
+colorado_admt.json conservatively records 2027-01-01 and flags the
+discrepancy in its verification_note. Either way, Colorado currently has
+no AI/ADMT statute in force as of today (2026-07-10): SB 24-205 repealed
+before ever taking effect, SB 26-189 not yet effective under either
+candidate date. Neither colorado_sb_205 nor colorado_admt is wired into
+glasswing/engines/classification.py this week (D-013's SB 205 scope
+limit still applies); the golden suite was re-run after both file
+changes and remains green.
+Status: OPEN for Renee review -- confirm the effective-date discrepancy
+and the exact statutory citations against the enrolled bill text before
+Week 6, per the user's "must clear before Week 6" priority.
+
+## D-021 — 2026-07-10 — NYC LL144 citation correction
+
+Finding: Week 2's nyc_ll144.json had section 20-870 and 20-871 reversed.
+Week 3 verification against the official NYC Administrative Code library
+(codelibrary.amlegal.com, via a search-indexed snippet of that page's own
+title and content -- direct fetch returned HTTP 403) confirms § 20-870 is
+Definitions (including "bias audit" and "employment decision") and §
+20-871 is the operative prohibition on using an AEDT without a bias
+audit, public summary, and notice.
+
+Choice: swapped the citations -- the "applicable_aedt" tier now cites §
+20-871 (the actual prohibition/requirement), and "not_applicable" cites §
+20-870 (definitions). needs_owner_review stays true: the precise
+statutory definition of "substantially assist or replace discretionary
+decision-making" and the exact carve-outs are still from secondary
+sources, since the full primary text and the DCWP final rule weren't
+fully readable this session (blocked or too large to fetch directly).
+Status: RESOLVED (citation mapping) / OPEN (full-text carve-out
+verification) -- see mcp_server/frameworks/nyc_ll144.json's
+verification_note.
+
+## D-022 — 2026-07-10 — EU AI Act Digital Omnibus: provisional flag resolved
+
+Finding: Week 2 flagged the Annex III deadline deferral (to 2027-12-02)
+as provisional, pending formal co-legislator adoption. Week 3 web search
+confirms formal adoption completed: European Parliament endorsed the text
+2026-06-16, Council of the EU gave final green light 2026-06-29, entering
+into force three days after Official Journal publication. Confirmed dates
+unchanged from Week 2's finding: 2027-12-02 for stand-alone Annex III
+high-risk systems, 2028-08-02 for Annex I embedded high-risk AI. The
+package also adds a new Article 5 prohibition (non-consensual intimate
+imagery / CSAM generation), compliance required 2026-12-02.
+
+Choice: updated eu_ai_act.json's effective_from to 2027-12-02 (previously
+2026-08-02, the pre-deferral date) and rewrote verification_note to
+record formal adoption, removing the "provisional" caveat. Did NOT add
+the new CSAM/intimate-imagery prohibition ground to the "prohibited"
+tier's criteria/examples this pass -- flagged needs_owner_review instead,
+since adding it properly is a content change requiring the same care as
+any other substantive dataset edit, not a side effect of a status-field
+verification pass.
+Status: RESOLVED (deferral adoption status) / OPEN (new CSAM prohibition
+ground not yet added to tier content) -- golden suite re-run and green
+after this change.

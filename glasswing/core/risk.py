@@ -1,9 +1,11 @@
 """RiskProfile — output of the deterministic classification engine.
 
-The engine itself (glasswing/engines/classification.py) lands Week 2; this
-model exists in Week 1 only so the table and the Phase 1 -> Phase 2 contract
-(GLASSWING_SPEC.md section 4: "the RiskProfile is the contract") have a
-stable home from day one.
+per_framework_results is populated by
+glasswing/engines/classification.py::build_per_framework_results(), which
+returns every framework's result (eu_ai_act, nist_ai_rmf, colorado_sb_205,
+nyc_ll144) as a same-shaped dict entry keyed by framework_id -- this is
+the Phase 1 -> Phase 2 contract (GLASSWING_SPEC.md section 4) and what the
+Week 6 report reads uniformly across frameworks (DECISIONS.md D-010).
 """
 
 from datetime import datetime
