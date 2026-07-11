@@ -1,0 +1,9 @@
+{
+  "data_sensitivity": ["pii"],
+  "data_sources": ["unknown"],
+  "user_scope": ["consumers"],
+  "completeness_score": 0.9,
+  "extraction_confidence": "high",
+  "unknowns": [],
+  "existing_controls": []
+}

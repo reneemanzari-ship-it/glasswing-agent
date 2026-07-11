@@ -1,0 +1,18 @@
+{
+  "data_sensitivity": ["financial", "pii"],
+  "data_sources": ["credit bureau history", "self-reported income data"],
+  "user_scope": ["consumers"],
+  "business_impact_tier": "high",
+  "reversibility": "partially_reversible",
+  "existing_controls": ["human oversight review committee"],
+  "completeness_score": 0.85,
+  "unknowns": [],
+  "extraction_confidence": 0.88,
+  "citations": {
+    "data_sensitivity": "Section 'Data Inputs': 'The model consumes applicant credit bureau history and self-reported income data.'",
+    "user_scope": "Section 'Users': 'Recommendations are shown to loan officers ... before any pre-approval offer is issued to a consumer.'",
+    "business_impact_tier": "Section 'Impact': 'The business considers this a high-impact system given its role in the lending funnel.'",
+    "reversibility": "Section 'Impact': 'a declined pre-approval can still proceed to full underwriting review.'",
+    "existing_controls": "Section 'Human Oversight': 'A human oversight review committee meets quarterly to audit a sample of decisions.'"
+  }
+}

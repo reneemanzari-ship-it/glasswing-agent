@@ -1,6 +1,7 @@
-"""LLM agents on the Claude Agent SDK: extraction, narrative, monitoring triage.
+"""LLM agents: extraction, narrative, monitoring triage. base.py isolates
+all model-SDK-specific types (DECISIONS.md D-024).
 
-Empty in Phase 1 Week 1; agents/base.py lands Week 4 (GLASSWING_SPEC.md section 3).
-The v0.1 agents at the repo-root agents/ package remain in place until each is
+evidence_extraction.py lands Week 4 (GLASSWING_SPEC.md section 3). The
+v0.1 agents at the repo-root agents/ package remain in place until each is
 retired on its scheduled week per GLASSWING_SPEC.md section 5.
 """

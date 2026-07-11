@@ -29,10 +29,12 @@ from glasswing.storage.models import (
     ApprovalDecisionRow,
     EvidenceRecordRow,
     InitiativeRow,
+    RiskProfileRow,
 )
 
 EVENT_INITIATIVE_CREATED = "initiative_created"
 EVENT_EVIDENCE_RECORDED = "evidence_recorded"
+EVENT_RISK_PROFILE_RECORDED = "risk_profile_recorded"
 EVENT_STATE_TRANSITIONED = "state_transitioned"
 
 # Legal edges implemented this week: DRAFT -> ... -> {APPROVED |
@@ -171,6 +173,53 @@ def record_evidence(
         },
     )
     return evidence
+
+
+def record_risk_profile(
+    session: Session,
+    *,
+    initiative: InitiativeRow,
+    per_framework_results: dict[str, Any],
+    overall_tier: str,
+    human_review_required: bool,
+    engine_version: str,
+    framework_versions: dict[str, str],
+    input_evidence_hashes: list[str] | None = None,
+    actor: str = "system",
+) -> RiskProfileRow:
+    """Creates a risk_profiles row for `initiative` and logs its
+    creation, mirroring create_initiative()/record_evidence()'s audit
+    pattern. Used by the Week 4 extraction runner
+    (glasswing/intake/extraction_runner.py) once
+    glasswing/engines/classification.py has classified an initiative --
+    this function only persists what the engine decided, it never
+    decides anything itself (CLAUDE.md invariant #1).
+    """
+    risk_profile = RiskProfileRow(
+        initiative_id=initiative.id,
+        per_framework_results=per_framework_results,
+        overall_tier=overall_tier,
+        human_review_required=human_review_required,
+        engine_version=engine_version,
+        framework_versions=framework_versions,
+        input_evidence_hashes=input_evidence_hashes or [],
+    )
+    session.add(risk_profile)
+    session.flush()
+
+    audit.append_entry(
+        session,
+        engagement_id=initiative.engagement_id,
+        event_type=EVENT_RISK_PROFILE_RECORDED,
+        actor=actor,
+        payload={
+            "initiative_id": str(initiative.id),
+            "risk_profile_id": str(risk_profile.id),
+            "overall_tier": overall_tier,
+            "engine_version": engine_version,
+        },
+    )
+    return risk_profile
 
 
 def _check_preconditions(

@@ -529,3 +529,196 @@ verification pass.
 Status: RESOLVED (deferral adoption status) / OPEN (new CSAM prohibition
 ground not yet added to tier content) -- golden suite re-run and green
 after this change.
+
+## D-023 — 2026-07-10 — Week 4 pre-work: D-010 parity safety, framework flag inventory, questionnaire purity
+
+Three confirmations before starting the Evidence Extraction agent
+(GLASSWING_SPEC.md section 3, Week 4).
+
+**1. D-010 fold-in cannot break v0.1 parity.** Not just argued --
+checked directly: tests/golden/test_v0_1_parity.py imports and calls only
+`classify_initiative()` (grep-confirmed: no reference to
+`build_per_framework_results` or `classify_nyc_ll144` anywhere in that
+module). `classify_initiative()` still returns
+`schemas.risk_profile.RiskProfile`, whose `Classifications` is a fixed
+Pydantic model with exactly three named fields
+(eu_ai_act/nist_ai_rmf/colorado_sb_205) -- it is structurally impossible
+for that object to carry an `nyc_ll144` key. The two code paths never
+intersect: `build_per_framework_results()` is additive and separate, not
+a modification of what parity compares. Re-ran
+`test_v0_1_parity.py` fresh: 12 passed (11 fixtures + the non-empty
+guard), unchanged from Week 2/3.
+
+**2. Framework needs_owner_review inventory** (both structured
+`needs_owner_review: true` markers and inline `NEEDS_OWNER_REVIEW` note
+text, since the two conventions coexist across files authored in
+different weeks):
+
+| Framework | status | effective_from | needs_owner_review | Notes |
+|---|---|---|---|---|
+| eu_ai_act | amended | 2027-12-02 | OPEN (inline note) | Deferral adoption itself is resolved (D-022); the new CSAM/intimate-imagery prohibition ground is not yet added to tier content -- that's the open item, not the date. |
+| colorado_sb_205 | repealed | null (never took effect) | none | Correctly flag-free at the dataset level (D-015/D-020 fully recorded its repeal) -- but see the gap below: the *engine* does not check this. |
+| colorado_admt | delayed | 2027-01-01 | OPEN (structured, both tiers) | Effective-date conflict (D-020) unresolved; this is this week's parallel-cleanup #1. |
+| nyc_ll144 | enacted | 2023-01-01 | OPEN (structured, both tiers) | Citations fixed (D-021); carve-out language unresolved -- this week's parallel-cleanup #2. |
+| nist_ai_rmf | enacted | 2023-01-26 | OPEN (inline note) | Not previously surfaced as "flagged" in any PR -- the AI RMF revision-in-progress note has carried an inline NEEDS_OWNER_REVIEW since Week 2 authoring. Low-severity (structure stable, wording watch only) but should be in this inventory for completeness. |
+| iso_42001 | enacted | 2023-12-18 | OPEN (structured, all 7 clauses + Annex A) | Renee's task; requires a licensed copy; not web-verifiable (Week 2 finding, restated). |
+
+**Gap found while building this table, not previously recorded:**
+`glasswing/engines/classification.py` never reads any
+`mcp_server/frameworks/*.json` file or its `status` field -- R1's
+"MCP is the source of truth" is honored only at the citation/category
+*content* level (D-009: hardcoded citations kept in sync with the JSON
+by hand), not by the engine actually querying the dataset or checking
+whether it's current. Concretely: `colorado_sb_205`'s classification
+branch in the engine still fires and still returns
+`applicable=True, high_risk_category=...` for lending/recruitment
+scenarios, exactly as it did before the repeal was discovered -- the
+dataset says repealed, but nothing in the code path consults that.
+This is not a Week 4 regression; it has been true since the engine was
+written (Week 2) and was not previously stated this plainly. Correct for
+this week's scope (full live MCP-tool-query-driven classification,
+including framework-status gating, is Week 5+ per D-009's own note); not
+correct to leave unstated, since it directly answers "is colorado_sb_205
+excluded from new classifications" -- the honest answer is *the dataset
+is correctly marked excluded; the classification engine does not yet act
+on that marking*.
+Status: RESOLVED (parity confirmation, inventory) / flagged forward --
+framework-status-aware classification is out of Week 4's scope and
+tracked for whenever the engine starts consulting MCP tool data directly
+(Week 5+, per D-009).
+
+**3. Questionnaire purity confirmed.** `grep -niE` across
+glasswing/engines/questionnaire.py for any question id, branch value, or
+fixture filename used in tests/fixtures/questionnaires/ turns up only two
+docstring/comment mentions (the branching-example prose using "lending"/
+"chatbot" as illustrative words, and a reference to
+`governance_intake_v1.yaml`/`sample_intake_v0.yaml` by name in module
+docstrings explaining the design) -- no question content, ID, or
+fixture-specific logic exists in the engine itself. Confirmed clean.
+
+## D-024 — 2026-07-10 — Evidence Extraction agent uses the base `anthropic` SDK, not `claude-agent-sdk`
+
+Question: GLASSWING_SPEC.md section 2.1 says agents wrap "the Claude
+Agent SDK." A real PyPI package named `claude-agent-sdk` exists (checked
+`pip index versions`, currently 0.2.116), but it is built for
+interactive, multi-turn agentic tool-use loops -- the Claude Code harness
+shape (permission modes, subagents, MCP tool wiring, turn-taking). The
+Evidence Extraction Agent's actual job is a single one-shot call: send a
+block of text, get back one JSON object matching a fixed schema. There is
+no tool-use loop, no multi-turn conversation, no subagent orchestration.
+
+Choice: `glasswing/agents/base.py` wraps the base `anthropic` Python SDK
+(already a project dependency) with a single `complete()` function,
+isolating that one call exactly as GLASSWING_SPEC.md's isolation
+requirement asks ("isolate every SDK type behind agents/base.py; the SDK
+is young and its API will move") -- just against a lighter-weight SDK
+than the one named.
+
+Why: pulling in `claude-agent-sdk` for a single messages.create() call
+would add a heavier, faster-moving dependency (a young SDK per the
+spec's own risk note) for capabilities (tool use, subagents, permission
+modes) this agent doesn't use. If a future agent (narrative generation,
+monitoring triage) genuinely needs multi-turn tool use, that agent can
+depend on `claude-agent-sdk` directly, still isolated behind its own
+module -- this doesn't preclude that, it just doesn't force it on the
+simplest possible agent.
+Status: RESOLVED for the Evidence Extraction Agent. Revisit per-agent as
+Week 6+ agents (narrative, monitoring triage) are built.
+
+## D-025 — 2026-07-10 — Bridging glasswing.core.initiative.Initiative into schemas.initiative.Initiative for classification
+
+Question: glasswing/engines/classification.py still consumes
+schemas.initiative.Initiative (the rich v0.1 shape, D-009), but Week 3's
+questionnaire runner populates glasswing.core.initiative.Initiative /
+InitiativeRow (the abbreviated Week 1 storage shape). Week 4 needs to
+call the classifier on an initiative that only has the abbreviated
+shape's fields plus whatever the Evidence Extraction Agent supplies.
+
+Choice: `glasswing/intake/extraction_runner.py::_bridge_to_classifier_initiative()`
+builds a schemas.initiative.Initiative from InitiativeRow's fields
+(name, description, modality, autonomy_level, hitl_planned,
+jurisdictions -- all fill in directly since the abbreviated model's
+fields were chosen to align with the rich model's enum values) plus
+ExtractedEvidence's fields (data sensitivity/sources, user scope,
+business impact tier, reversibility, existing controls, completeness/
+unknowns). Fields neither model supplies -- sponsor identity
+(business_unit/owner) and intake timing (intake_duration_minutes) --
+fall back to the exact placeholder convention v0.1's own freeform-intake
+path already uses
+(skills/ai_risk_tier_classification/scripts/classifier.py::
+AIRiskTierClassificationSkill._extract_initiative: `sponsor=Sponsor
+(business_unit="unknown", owner="unknown")`,
+`intake_duration_minutes=0.0`, `business_impact_tier=MODERATE` and
+`reversibility=PARTIALLY_REVERSIBLE` as the defaults when a source
+doesn't establish them) -- not a new convention invented for this week.
+
+Why: this is a real, pre-existing gap (the two Initiative schemas were
+never reconciled -- D-002 deferred that, and Week 3 didn't need to
+resolve it since the questionnaire runner never called the classifier).
+Week 4's acceptance criteria require the full extract -> classify ->
+CLASSIFIED pipeline to actually run, so the gap has to be bridged now,
+not designed away. Reusing v0.1's existing "unknown"/default convention
+(rather than inventing a new one) keeps this consistent with how the
+codebase already handles incomplete intake, and keeps the bridge a small,
+contained adapter function rather than a schema unification project --
+which is out of Week 4's scope.
+Status: OPEN for Renee review -- flagging that
+glasswing.core.initiative.Initiative and schemas.initiative.Initiative
+should eventually be unified into one Initiative model (likely whenever
+storage/CLI/reporting all need to read the same rich fields the
+classifier already requires); not blocking Week 4, but real technical
+debt this decision makes visible rather than hides.
+
+## D-026 — 2026-07-10 — Colorado SB 26-189 effective date resolved (D-020 closed)
+
+Finding: the apparent 2026-08-12 vs 2027-01-01 conflict flagged in D-020
+is NOT a genuine split between two obligation categories (unlike NYC
+LL144's real enactment-vs-enforcement gap, which the instructions
+correctly guessed this might resemble). It is Colorado's DEFAULT
+effective date for a bill without a safety clause (90 days after the
+2026-05-13 adjournment = 2026-08-12) versus the effective date SB
+26-189's own text specifically designates, which overrides that
+default. Multiple sources confirm SB 26-189 was drafted with its own
+effective-date clause setting 2027-01-01, so the state default never
+applies to it.
+
+Choice: colorado_admt.json's effective_from stays 2027-01-01, now
+recorded as a single resolved date rather than a flagged discrepancy.
+needs_owner_review stays true on the tier content (unchanged) --
+exact C.R.S. section citations for the ADMT provisions are still
+unconfirmed against the primary enrolled text, which is a narrower,
+separate gap from the effective-date question this closes.
+Why: this was explicitly called "highest priority, must clear before
+Week 6" -- resolving it now, backed by the bill's own designated
+effective-date clause rather than a secondary-source guess, satisfies
+that.
+Status: RESOLVED (effective date) / OPEN, narrower (exact statutory
+citations) -- golden suite re-run and green after this change.
+
+## D-027 — 2026-07-10 — NYC LL144 carve-out language resolved (D-021 narrowed)
+
+Finding: a secondary source (National Law Review) quotes the DCWP final
+rule's own carve-out language directly: "The definition does not
+include tools that do not automate, support, substantially assist, or
+replace discretionary decision-making processes and that does not
+materially impact natural persons, such as a junk email filter,
+firewall, antivirus software, spreadsheet, or other compilation of
+data." The rule does not further quantify "substantially assist" beyond
+this exclusion-by-example approach -- confirmed this is the rule's
+actual design, not a gap in verification. Also confirmed "employment
+decision" scope is broader than final hiring: covers early-stage
+screening and promotion, not just an ultimate hire/no-hire call.
+
+Choice: updated nyc_ll144.json's "not_applicable" tier with the DCWP
+rule's actual named exemptions (junk email filter, firewall, antivirus
+software, spreadsheet, other data compilation) in place of the previous
+generic placeholder ("tools used solely for scheduling"), and broadened
+the "applicable_aedt" tier's summary to state the confirmed decision
+scope. needs_owner_review stays true, narrowed: the DCWP final rule PDF
+itself could not be parsed by this session's tooling (binary/compressed
+content, WebFetch returned unreadable stream data), so the exact section
+citation for this carve-out (as opposed to the carve-out language
+itself, which is now sourced) remains unconfirmed.
+Status: RESOLVED (carve-out language, decision scope) / OPEN, narrower
+(exact DCWP final rule section citation) -- golden suite re-run and
+green after this change.

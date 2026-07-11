@@ -1,0 +1,14 @@
+{
+  "data_sensitivity": ["pii"],
+  "data_sources": ["unclear from source"],
+  "user_scope": ["consumers"],
+  "business_impact_tier": null,
+  "reversibility": null,
+  "existing_controls": [],
+  "completeness_score": 0.4,
+  "unknowns": ["business_impact_tier", "reversibility", "existing_controls"],
+  "extraction_confidence": 0.5,
+  "citations": {
+    "data_sensitivity": "Brief mention of 'customer information' with no further detail."
+  }
+}
